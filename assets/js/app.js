@@ -243,16 +243,15 @@ async function initSearch() {
       list.innerHTML = '';
 
       if (results.length === 0) {
-        list.innerHTML = '<mdui-list-item nonclickable headline="无匹配文章"></mdui-list-item>';
+        list.innerHTML = '<div class="search-no-result">无匹配文章</div>';
       } else {
         results.forEach(r => {
-          const title = escapeHtml(r.item.title).replace(/"/g, '&quot;');
-          const desc = escapeHtml(r.item.description || r.item.date).replace(/"/g, '&quot;');
-          const item = document.createElement('mdui-list-item');
-          item.setAttribute('rounded', '');
-          item.setAttribute('headline', title);
-          item.setAttribute('description', desc);
-          item.style.cursor = 'pointer';
+          const item = document.createElement('div');
+          item.className = 'search-result-item';
+          item.innerHTML = `
+            <div class="search-result-title">${escapeHtml(r.item.title)}</div>
+            <div class="search-result-desc">${escapeHtml(r.item.description || r.item.date)}</div>
+          `;
           item.addEventListener('click', () => {
             location.hash = `#/post/${r.item.slug}`;
             dropdown.style.display = 'none';
