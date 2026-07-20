@@ -40,7 +40,13 @@ const debounce = (fn, wait) => {
 // ==================== 主题系统 ====================
 function initTheme() {
   const btn = $('theme-btn');
-  const icon = btn.querySelector('mdui-icon');
+  const label = $('theme-label');
+
+  const themeMap = {
+    auto:  { icon: 'brightness_auto', text: '跟随系统' },
+    light: { icon: 'brightness_7',    text: '亮色模式' },
+    dark:  { icon: 'brightness_2',    text: '暗色模式' },
+  };
 
   const apply = theme => {
     const html = document.documentElement;
@@ -49,9 +55,9 @@ function initTheme() {
     currentTheme = theme;
     localStorage.setItem('theme', theme);
 
-    icon.name = theme === 'light' ? 'brightness_7'
-              : theme === 'dark'  ? 'brightness_2'
-              : 'brightness_auto';
+    const cfg = themeMap[theme];
+    btn.icon = cfg.icon;
+    if (label) label.textContent = cfg.text;
 
     syncWalineTheme();
   };
@@ -217,17 +223,9 @@ function generateTOC(container) {
 
 // ==================== 搜索系统（Fuse.js） ====================
 async function initSearch() {
-  // 检查 Fuse.js 是否加载成功
-  if (typeof Fuse === 'undefined') {
-    console.error('Fuse.js 未加载，搜索功能不可用');
-    return;
-  }
-
   try {
     const res = await fetch('/search.json');
-    if (!res.ok) throw new Error(`search.json ${res.status}`);
     const data = await res.json();
-
     fuse = new Fuse(data, {
       keys: [
         { name: 'title', weight: 0.4 },
@@ -243,16 +241,10 @@ async function initSearch() {
     const dropdown = $('search-dropdown');
     const list = $('search-results');
 
-    const doSearch = () => {
-      const q = (input.value || '').trim();
+    input.addEventListener('input', e => {
+      const q = e.target.value.trim();
+      if (!q) { dropdown.style.display = 'none'; return; }
 
-      if (!q) {
-        list.innerHTML = '';
-        dropdown.style.display = 'none';
-        return;
-      }
-
-      if (!fuse) return;
       const results = fuse.search(q).slice(0, 8);
       list.innerHTML = '';
 
@@ -264,7 +256,7 @@ async function initSearch() {
           item.className = 'search-result-item';
           item.innerHTML = `
             <div class="search-result-title">${escapeHtml(r.item.title)}</div>
-            <div class="search-result-desc">${escapeHtml(r.item.description || formatDate(r.item.date))}</div>
+            <div class="search-result-desc">${escapeHtml(r.item.description || r.item.date)}</div>
           `;
           item.addEventListener('click', () => {
             location.hash = `#/post/${r.item.slug}`;
@@ -274,43 +266,14 @@ async function initSearch() {
           list.appendChild(item);
         });
       }
-
       dropdown.style.display = 'block';
-    };
-
-    // 核心修复：在 shadowRoot 内部 input 上监听 input 事件
-    const bindInput = () => {
-      try {
-        const nativeInput = input.shadowRoot && input.shadowRoot.querySelector('input');
-        if (nativeInput) {
-          nativeInput.addEventListener('input', doSearch);
-          return true;
-        }
-      } catch (e) {}
-      return false;
-    };
-
-    if (!bindInput()) {
-      customElements.whenDefined('mdui-text-field').then(() => {
-        requestAnimationFrame(bindInput);
-      });
-    }
-
-    // 后备：keyup 事件
-    input.addEventListener('keyup', doSearch);
-
-    // 聚焦恢复
-    input.addEventListener('focus', () => {
-      if ((input.value || '').trim() && fuse) doSearch();
     });
 
-    // 点击外部关闭
     document.addEventListener('click', e => {
       if (!input.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.style.display = 'none';
       }
     });
-
   } catch (err) {
     console.error('搜索初始化失败:', err);
   }

@@ -115,14 +115,11 @@ body {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 250;
+  z-index: 200;
   max-height: 320px;
   overflow-y: auto;
   display: none;
-  background: rgb(var(--mdui-color-surface-container));
-  border-radius: var(--mdui-shape-corner-medium);
-  box-shadow: var(--mdui-elevation-level3);
-  padding: 4px 0;
+  --mdui-elevation-level: 3;
 }
 
 /* 导航 */
@@ -139,6 +136,11 @@ body {
 .theme-wrap {
   text-align: center;
   padding: 8px 0;
+}
+
+.theme-wrap mdui-button {
+  width: 100%;
+  justify-content: center;
 }
 
 /* 主内容区 */
