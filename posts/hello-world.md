@@ -31,4 +31,7 @@ function greet(name) {
 console.log(greet('World'));
 ```
 
+## 视频示例
+<video src="/posts/videos/demo.mp4" controls></video>
+
 希望你喜欢这个博客！
