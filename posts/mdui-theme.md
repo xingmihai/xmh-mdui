@@ -38,7 +38,25 @@ MDUI 使用 CSS 自定义属性实现设计令牌，可以全局修改样式：
 
 
 
-```graph TD
+### Describe the bug
+
+文章预览:
+
+<img width="635" height="463" alt="Image" src="https://github.com/user-attachments/assets/c4e57f3e-73c5-4293-83c9-d08f9188a141" />
+
+全屏之后预览:
+
+<img width="1209" height="553" alt="Image" src="https://github.com/user-attachments/assets/1bee1555-3e05-49bb-aee7-541f66d3c0a2" />
+
+全屏放大之后预览:
+
+<img width="394" height="551" alt="Image" src="https://github.com/user-attachments/assets/9b5da512-74d1-447f-baea-05ff36f73ab8" />
+
+### To Reproduce
+
+随便写一个长一点的mermaid,例如
+```mermaid
+graph TD
     Start([画面帧输入]) --> CheckName{1. 前置哨兵: Name Box 是否有字?}
     CheckName -- 无文字 --> Exit([Fail-Fast 退出: 非对话场景])
     CheckName -- 有文字 --> CheckTitle{2. 检测 Title 称号框}
@@ -61,3 +79,25 @@ MDUI 使用 CSS 自定义属性实现设计令牌，可以全局修改样式：
     CheckC1 -- 存在 --> C1[1 个分支选项]
     CheckC1 -- 否 --> C0[无分支纯对话场景]
 ```
+
+之后打开文章查看
+
+### Expected behavior
+
+这是vscode的插件渲染的效果(虽然不能类比吧)
+
+<img width="722" height="561" alt="Image" src="https://github.com/user-attachments/assets/0d43947f-024c-4fc2-b67f-d2b8fb59789e" />
+
+
+
+### OS
+
+_No response_
+
+### Browser
+
+_No response_
+
+### Additional context
+
+_No response_
