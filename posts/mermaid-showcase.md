@@ -320,19 +320,19 @@ timeline
 
 ```mermaid
 quadrantChart
-    title 技术选型优先级矩阵
-    x-axis 低重要性 --> 高重要性
-    y-axis 低紧急性 --> 高紧急性
-    quadrant-1 立即执行
-    quadrant-2 计划执行
-    quadrant-3 考虑放弃
-    quadrant-4 观察等待
-    "支付系统升级": [0.85, 0.9]
-    "SEO 优化": [0.7, 0.6]
-    "暗色主题": [0.5, 0.8]
-    "PWA 支持": [0.4, 0.3]
-    "国际化": [0.6, 0.2]
-    "微前端": [0.3, 0.5]
+    title Reach and engagement of campaigns
+    x-axis Low Reach --> High Reach
+    y-axis Low Engagement --> High Engagement
+    quadrant-1 We should expand
+    quadrant-2 Need to promote
+    quadrant-3 Re-evaluate
+    quadrant-4 May be improved
+    Campaign A: [0.3, 0.6]
+    Campaign B: [0.45, 0.23]
+    Campaign C: [0.57, 0.69]
+    Campaign D: [0.78, 0.34]
+    Campaign E: [0.40, 0.34]
+    Campaign F: [0.35, 0.78]
 ```
 
 ---
@@ -449,13 +449,10 @@ requirementDiagram
 
 ```mermaid
 radar-beta
-    title "Framework Comparison"
-    axis Performance, Maintainability, Community, LearningCurve, Ecosystem
-    scale 0 --> 10
-    React: [9, 8, 10, 6, 10]
-    Vue: [8, 9, 9, 9, 9]
-    Svelte: [10, 8, 6, 8, 5]
-    Angular: [7, 7, 7, 4, 8]
+    axis A, B, C, D, E
+    curve c1{1, 2, 3, 4, 5}
+    curve c2{5, 4, 3, 2, 1}
+    curve c3{3, 3, 3, 3, 3}
 ```
 
 ---
