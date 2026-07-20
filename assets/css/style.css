@@ -561,6 +561,7 @@ img[loading="lazy"] {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
+  object-position: center top;
   display: block;
   border-radius: 0 !important;
 }
