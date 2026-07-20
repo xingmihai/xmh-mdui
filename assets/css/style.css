@@ -537,7 +537,7 @@ img[loading="lazy"] {
 /* ========== GitHub 卡片自定义语法 ========== */
 .gh-wrap { margin: 16px 0; }
 .gh-card {
-  padding: 16px;
+  padding: 480px;
   cursor: pointer;
   max-width: 480px;
   display: block;
