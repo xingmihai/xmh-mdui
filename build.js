@@ -52,6 +52,15 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function mdxToPlainText(mdx) {
   return mdx
     .replace(/<([A-Z][a-zA-Z0-9]*)[^>]*>([\s\S]*?)<\/\1>/g, '$2')
@@ -65,14 +74,12 @@ function mdxToPlainText(mdx) {
 
 // 将 Markdown 表格转换为 HTML 表格（GFM 替代方案）
 function markdownTableToHtml(text) {
-  // 匹配完整的 Markdown 表格块
   return text.replace(
     /(?:^|\n)((?:\|[^\n]*\|(?:\r?\n)?)+)/g,
     (match, tableBlock) => {
       const lines = tableBlock.trim().split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) return match;
 
-      // 检查第二行是否是分隔行 (|---|---|)
       const sepLine = lines[1].trim();
       if (!/^\|?[\s\-:|]+\|?$/.test(sepLine)) return match;
 
@@ -81,16 +88,15 @@ function markdownTableToHtml(text) {
 
       let html = '<table>\n<thead>\n<tr>';
       headerCells.forEach(cell => {
-        html += `<th>${escapeXml(cell.trim())}</th>`;
+        html += `<th>${escapeHtml(cell.trim())}</th>`;
       });
       html += '</tr>\n</thead>\n<tbody>\n';
 
       bodyRows.forEach(row => {
         html += '<tr>';
-        row.forEach((cell, i) => {
+        row.forEach(cell => {
           html += `<td>${escapeHtml(cell.trim())}</td>`;
         });
-        // 补齐缺失的单元格
         for (let i = row.length; i < headerCells.length; i++) {
           html += '<td></td>';
         }
@@ -107,17 +113,6 @@ function parseTableRow(line) {
   const content = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
   const withoutEnd = content.endsWith('|') ? content.slice(0, -1) : content;
   return withoutEnd.split('|').map(s => s.trim());
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  const div = document.createElement ? null : null;
-  // 简单转义
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 // ========== MDX 组件（构建时注入） ==========
@@ -141,7 +136,6 @@ const MDX_COMPONENTS = {
 };
 
 function compileMDXToHtml(mdxBody) {
-  // 预处理：把 Markdown 表格转成 HTML 表格
   const processed = markdownTableToHtml(mdxBody);
 
   const vfile = compileSync(processed, {
