@@ -55,13 +55,16 @@ function initMermaid() {
   });
 }
 
-function renderMermaid(container) {
+async function renderMermaid(container) {
   if (typeof mermaid === 'undefined') return;
-  // 同步当前主题
   mermaid.initialize({ theme: getMermaidTheme() });
   const nodes = container.querySelectorAll('.mermaid:not([data-processed="true"])');
   if (!nodes.length) return;
-  mermaid.run({ nodes });
+  try {
+    await mermaid.run({ nodes: Array.from(nodes) });
+  } catch (e) {
+    console.error('Mermaid 渲染失败:', e);
+  }
 }
 
 // ==================== 主题系统 ====================
@@ -76,10 +79,6 @@ function initTheme() {
     html.classList.add(`mdui-theme-${theme}`);
     currentTheme = theme;
     localStorage.setItem('theme', theme);
-    // 同步 Mermaid 主题
-    if (typeof mermaid !== 'undefined') {
-      mermaid.initialize({ theme: getMermaidTheme() });
-    }
 
     [btnLight, btnDark, btnAuto].forEach(btn => {
       if (btn) btn.classList.remove('active');
@@ -585,7 +584,18 @@ async function renderPost(container, params) {
     if (!res.ok) throw new Error('404');
     const md = await res.text();
     const { frontMatter, content } = parseFrontMatter(md);
-    const htmlContent = marked.parse(content);
+    let htmlContent = marked.parse(content);
+
+    // 后处理：将 mermaid 代码块替换为 mermaid 容器
+    htmlContent = htmlContent.replace(
+      /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+      (match, code) => {
+        // 解码 HTML 实体（marked 会自动转义）
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = code;
+        return `<div class="mermaid">${textarea.value}</div>`;
+      }
+    );
     const words = countWords(content);
 
     let html = '';
@@ -616,15 +626,6 @@ async function renderPost(container, params) {
       <div style="margin-top:24px;"><div id="waline"></div></div>
     `;
     container.innerHTML = html;
-
-    // 转换 mermaid 代码块为 mermaid 容器
-    container.querySelectorAll('pre code.language-mermaid').forEach(code => {
-      const pre = code.parentElement;
-      const div = document.createElement('div');
-      div.className = 'mermaid';
-      div.textContent = code.textContent;
-      pre.replaceWith(div);
-    });
 
     // 代码高亮
     container.querySelectorAll('pre code').forEach(b => {
