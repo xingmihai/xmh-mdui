@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { compileSync } = require('@mdx-js/mdx');
-const remarkGfm = require('remark-gfm');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const { jsx, jsxs, Fragment } = require('react/jsx-runtime');
@@ -85,11 +84,14 @@ const MDX_COMPONENTS = {
   Column: ({ children }) => React.createElement('div', { className: 'mdx-column' }, children),
 };
 
-function compileMDXToHtml(mdxBody) {
+async function compileMDXToHtml(mdxBody) {
+  // 动态导入 ESM 插件
+  const { default: remarkGfm } = await import('remark-gfm');
+
   const vfile = compileSync(mdxBody, {
     outputFormat: 'function-body',
     development: false,
-    remarkPlugins: [remarkGfm], // 启用 GFM：表格、删除线、任务列表等
+    remarkPlugins: [remarkGfm],
   });
   const code = String(vfile);
 
@@ -108,44 +110,44 @@ function compileMDXToHtml(mdxBody) {
 }
 
 // ========== 构建主函数 ==========
-function build() {
+async function build() {
   // 清理旧编译产物
   if (fs.existsSync(OUTPUT_DIR)) {
     fs.readdirSync(OUTPUT_DIR).forEach(f => fs.unlinkSync(path.join(OUTPUT_DIR, f)));
   }
 
-  const files = fs.readdirSync(POSTS_DIR)
-    .filter(f => f.endsWith('.md') || f.endsWith('.mdx'))
-    .map(f => {
-      const raw = fs.readFileSync(path.join(POSTS_DIR, f), 'utf-8');
-      const { frontMatter, content: body } = parseFrontMatter(raw);
-      const slug = f.replace(/\.(md|mdx)$/, '');
-      const isMdx = f.endsWith('.mdx');
+  const files = [];
+  for (const f of fs.readdirSync(POSTS_DIR).filter(f => f.endsWith('.md') || f.endsWith('.mdx'))) {
+    const raw = fs.readFileSync(path.join(POSTS_DIR, f), 'utf-8');
+    const { frontMatter, content: body } = parseFrontMatter(raw);
+    const slug = f.replace(/\.(md|mdx)$/, '');
+    const isMdx = f.endsWith('.mdx');
 
-      let compiledHtml = null;
-      if (isMdx) {
-        try {
-          compiledHtml = compileMDXToHtml(body);
-          fs.writeFileSync(path.join(OUTPUT_DIR, `${slug}.html`), compiledHtml);
-          console.log(`✅ MDX 编译完成: ${f}`);
-        } catch (e) {
-          console.error(`❌ MDX 编译失败 ${f}:`, e.message);
-          console.error(e.stack);
-        }
+    let compiledHtml = null;
+    if (isMdx) {
+      try {
+        compiledHtml = await compileMDXToHtml(body);
+        fs.writeFileSync(path.join(OUTPUT_DIR, `${slug}.html`), compiledHtml);
+        console.log(`✅ MDX 编译完成: ${f}`);
+      } catch (e) {
+        console.error(`❌ MDX 编译失败 ${f}:`, e.message);
+        console.error(e.stack);
       }
+    }
 
-      return {
-        slug,
-        title: frontMatter.title || slug,
-        date: frontMatter.date || new Date().toISOString().split('T')[0],
-        tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
-        description: frontMatter.description || '',
-        cover: frontMatter.cover || '',
-        format: isMdx && compiledHtml ? 'mdx' : 'md',
-        content: isMdx ? mdxToPlainText(body).slice(0, 5000) : body.slice(0, 5000),
-      };
-    })
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+    files.push({
+      slug,
+      title: frontMatter.title || slug,
+      date: frontMatter.date || new Date().toISOString().split('T')[0],
+      tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
+      description: frontMatter.description || '',
+      cover: frontMatter.cover || '',
+      format: isMdx && compiledHtml ? 'mdx' : 'md',
+      content: isMdx ? mdxToPlainText(body).slice(0, 5000) : body.slice(0, 5000),
+    });
+  }
+
+  files.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // 生成 search.json
   fs.writeFileSync(OUTPUT_SEARCH, JSON.stringify(files, null, 2));
