@@ -384,16 +384,16 @@ function initMarked() {
 
   const renderer = new marked.Renderer();
 
-  // 为链接添加安全属性
-  renderer.link = (href, title, text) => {
-    const isExternal = href.startsWith('http');
+  // marked v15: renderer 方法接收 token 对象 { href, title, text, tokens }
+  renderer.link = ({ href, title, text }) => {
+    const hrefStr = String(href || '');
+    const isExternal = hrefStr.startsWith('http');
     const attrs = isExternal ? ' target="_blank" rel="noopener noreferrer nofollow"' : '';
-    return `<a href="${escapeHtml(href)}"${title ? ` title="${escapeHtml(title)}"` : ''}${attrs}>${text}</a>`;
+    return `<a href="${escapeHtml(hrefStr)}"${title ? ` title="${escapeHtml(title)}"` : ''}${attrs}>${text}</a>`;
   };
 
-  // 为图片添加懒加载和灯箱
-  renderer.image = (href, title, text) => {
-    const cleanHref = href.replace(/^\s+/, '').replace(/\s+$/, '');
+  renderer.image = ({ href, title, text }) => {
+    const cleanHref = String(href || '').replace(/^\s+/, '').replace(/\s+$/, '');
     return `<img src="${escapeHtml(cleanHref)}"${title ? ` title="${escapeHtml(title)}"` : ''} alt="${escapeHtml(text || '')}" loading="lazy" data-zoomable>`;
   };
 
