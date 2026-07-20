@@ -217,20 +217,10 @@ function generateTOC(container) {
 
 // ==================== 搜索系统（Fuse.js） ====================
 async function initSearch() {
-  // 如果 Fuse.js 未加载（CDN 失败），动态加载
+  // 检查 Fuse.js 是否加载成功
   if (typeof Fuse === 'undefined') {
-    try {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/fuse.js@7.5.0/dist/fuse.min.js';
-        s.onload = resolve;
-        s.onerror = () => reject(new Error('Fuse.js CDN 加载失败'));
-        document.head.appendChild(s);
-      });
-    } catch (err) {
-      console.error('Fuse.js 加载失败，搜索功能不可用:', err);
-      return;
-    }
+    console.error('Fuse.js 未加载，搜索功能不可用');
+    return;
   }
 
   try {
