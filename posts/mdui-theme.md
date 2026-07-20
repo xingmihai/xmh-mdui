@@ -35,5 +35,3 @@ MDUI 使用 CSS 自定义属性实现设计令牌，可以全局修改样式：
   --mdui-shape-corner-large: 1.5rem;
 }
 ```
-
-<mdui-button href="https://www.mdui.org" target="_blank">Link</mdui-button>
