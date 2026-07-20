@@ -235,7 +235,7 @@ async function initSearch() {
     const dropdown = $('search-dropdown');
     const list = $('search-results');
 
-    // 修复：使用 input 元素的 value，避免 Shadow DOM 事件重定向问题
+    // 修复：不依赖 e.target（Shadow DOM 事件重定向问题），直接读取 input.value
     const doSearch = () => {
       const q = input.value.trim();
       if (!q) {
@@ -255,7 +255,7 @@ async function initSearch() {
         list.appendChild(empty);
       } else {
         results.forEach(r => {
-          // 修复：使用 mdui-list-item 以兼容 mdui-list 的渲染
+          // 修复：使用 mdui-list-item 以兼容 mdui-list 的渲染逻辑
           const item = document.createElement('mdui-list-item');
           item.setAttribute('rounded', '');
           item.setAttribute('headline', r.item.title);
@@ -272,20 +272,19 @@ async function initSearch() {
       dropdown.style.display = 'block';
     };
 
-    // 同时监听 input 和 keyup，确保兼容性
     input.addEventListener('input', doSearch);
-
-    // 点击外部关闭下拉框
-    document.addEventListener('click', e => {
-      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.style.display = 'none';
-      }
-    });
 
     // 输入框获得焦点时，如果有内容则重新显示结果
     input.addEventListener('focus', () => {
       if (input.value.trim() && fuse) {
         dropdown.style.display = 'block';
+      }
+    });
+
+    // 点击外部关闭下拉框
+    document.addEventListener('click', e => {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
       }
     });
   } catch (err) {

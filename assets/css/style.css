@@ -115,7 +115,7 @@ body {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 200;
+  z-index: 250;
   max-height: 320px;
   overflow-y: auto;
   display: none;
