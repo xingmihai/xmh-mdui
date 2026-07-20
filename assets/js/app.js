@@ -37,6 +37,139 @@ const debounce = (fn, wait) => {
   };
 };
 
+// ==================== GitHub 卡片组件 ====================
+function createGitHubCardComponent(React) {
+  return function GitHubCard({ repo }) {
+    const [state, setState] = React.useState({ loading: true, data: null, error: null });
+
+    React.useEffect(() => {
+      let cancelled = false;
+      fetch(`https://api.github.com/repos/${repo}`)
+        .then(r => {
+          if (!r.ok) throw new Error(r.status === 404 ? '仓库不存在' : `HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(data => { if (!cancelled) setState({ loading: false, data, error: null }); })
+        .catch(err => { if (!cancelled) setState({ loading: false, data: null, error: err.message }); });
+      return () => { cancelled = true; };
+    }, [repo]);
+
+    if (state.loading) {
+      return React.createElement('div', { className: 'github-card loading' },
+        React.createElement('mdui-linear-progress', null)
+      );
+    }
+    if (state.error) {
+      return React.createElement('div', { className: 'github-card error' },
+        React.createElement('mdui-icon', { name: 'error', style: 'font-size:20px;vertical-align:middle;margin-right:4px;' }),
+        `加载失败: ${state.error}`
+      );
+    }
+
+    const d = state.data;
+    return React.createElement('div', {
+      className: 'github-card',
+      onClick: () => window.open(d.html_url, '_blank', 'noopener')
+    }, [
+      React.createElement('div', { key: 'h', className: 'github-card-header' }, [
+        React.createElement('img', { key: 'a', src: d.owner.avatar_url, alt: '' }),
+        React.createElement('span', { key: 't' }, d.full_name)
+      ]),
+      React.createElement('p', { key: 'd', className: 'github-card-desc' }, d.description || '暂无描述'),
+      React.createElement('div', { key: 'm', className: 'github-card-meta' }, [
+        d.language && React.createElement('span', { key: 'l' }, `● ${d.language}`),
+        React.createElement('span', { key: 's' }, `⭐ ${d.stargazers_count.toLocaleString()}`),
+        React.createElement('span', { key: 'f' }, `🍴 ${d.forks_count.toLocaleString()}`)
+      ])
+    ]);
+  };
+}
+
+async function hydrateGitHubCards(container) {
+  const placeholders = container.querySelectorAll('.github-card-placeholder');
+  if (!placeholders.length) return;
+  try {
+    const React = await import('https://esm.sh/react@18.3.1');
+    const { createRoot } = await import('https://esm.sh/react-dom@18.3.1/client');
+    const GitHubCard = createGitHubCardComponent(React);
+    placeholders.forEach(el => {
+      const repo = el.dataset.repo;
+      const root = createRoot(el);
+      root.render(React.createElement(GitHubCard, { repo }));
+    });
+  } catch (e) {
+    console.error('GitHub 卡片渲染失败:', e);
+  }
+}
+
+// ==================== MDX 渲染 ====================
+async function renderMDX(container, mdxContent, frontMatter, slug) {
+  const [{ evaluate }, runtime, React, { createRoot }] = await Promise.all([
+    import('https://esm.sh/@mdx-js/mdx@3.0.1'),
+    import('https://esm.sh/react@18.3.1/jsx-runtime'),
+    import('https://esm.sh/react@18.3.1'),
+    import('https://esm.sh/react-dom@18.3.1/client')
+  ]);
+
+  const GitHubCard = createGitHubCardComponent(React);
+  const words = countWords(mdxContent);
+
+  let html = '';
+  if (frontMatter.cover) {
+    html += `<img src="${escapeHtml(frontMatter.cover)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--mdui-shape-corner-large);margin-bottom:24px;" alt="文章封面" data-zoomable>`;
+  }
+  html += `
+    <div style="margin-bottom:24px;">
+      <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(frontMatter.title || slug)}</h1>
+      <div class="mdui-typescale-body-small" style="opacity:0.7;">
+        <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
+        ${formatDate(frontMatter.date)} ·
+        <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
+        ${words} 字 ·
+        ${(frontMatter.tags || []).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+      </div>
+    </div>
+    <div id="mdx-content" class="post-content mdui-prose"></div>
+    <mdui-divider style="margin:32px 0;"></mdui-divider>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+      <div class="mdui-typescale-body-small" style="opacity:0.7;">
+        本文链接：<a href="${CONFIG.siteUrl}/#/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/#/post/${slug}',2000);">${CONFIG.siteUrl}/#/post/${slug}</a>
+      </div>
+    </div>
+    <div style="margin-top:24px;"><div id="waline"></div></div>
+  `;
+  container.innerHTML = html;
+
+  const mdxContainer = $('mdx-content');
+  const { default: MDXContent } = await evaluate(mdxContent, {
+    ...runtime,
+    remarkPlugins: [],
+    rehypePlugins: [],
+    baseUrl: CONFIG.siteUrl,
+  });
+
+  const root = createRoot(mdxContainer);
+  root.render(React.createElement(MDXContent, {
+    components: { GitHubCard }
+  }));
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      mdxContainer.querySelectorAll('pre code').forEach(b => {
+        if (window.hljs) hljs.highlightElement(b);
+      });
+      initCodeCopy(mdxContainer);
+      initImageZoom(mdxContainer);
+      renderMermaid(mdxContainer);
+      renderPlantUML(mdxContainer);
+      generateTOC(container);
+    }, 100);
+  });
+
+  initWaline(slug);
+  updateMeta(frontMatter.title || slug, frontMatter.description || '');
+}
+
 // ==================== Mermaid 支持 ====================
 function getMermaidTheme() {
   const html = document.documentElement;
@@ -482,6 +615,29 @@ async function initMarked() {
     console.warn('脚注插件加载失败:', e);
   }
 
+  // 注册 GitHub 卡片扩展
+  marked.use({
+    extensions: [{
+      name: 'githubCard',
+      level: 'block',
+      start(src) { return src.match(/::github\{/)?.index; },
+      tokenizer(src) {
+        const rule = /^::github\{repo="([^"]+)"\}\s*(?:\n|$)/;
+        const match = rule.exec(src);
+        if (match) {
+          return {
+            type: 'githubCard',
+            raw: match[0],
+            repo: match[1]
+          };
+        }
+      },
+      renderer(token) {
+        return `<div class="github-card-placeholder" data-repo="${escapeHtml(token.repo)}"></div>`;
+      }
+    }]
+  });
+
   const renderer = new marked.Renderer();
 
   // marked v15: renderer 方法接收 token 对象 { href, title, text, tokens }
@@ -614,11 +770,27 @@ async function renderHome(container, params = {}) {
 
 async function renderPost(container, params) {
   const { slug } = params;
+  let md = '';
+  let isMdx = false;
+
+  // 先尝试 .mdx，回退到 .md
   try {
+    const res = await fetch(`${CONFIG.postsDir}${slug}.mdx`);
+    if (res.ok) { md = await res.text(); isMdx = true; }
+  } catch (e) {}
+
+  if (!md) {
     const res = await fetch(`${CONFIG.postsDir}${slug}.md`);
     if (!res.ok) throw new Error('404');
-    const md = await res.text();
-    const { frontMatter, content } = parseFrontMatter(md);
+    md = await res.text();
+  }
+
+  const { frontMatter, content } = parseFrontMatter(md);
+
+  if (isMdx) {
+    await renderMDX(container, content, frontMatter, slug);
+    return;
+  }
     let htmlContent = marked.parse(content);
 
     // 后处理：将 mermaid 代码块替换为 mermaid 容器
@@ -689,6 +861,7 @@ async function renderPost(container, params) {
     // 渲染 PlantUML 图表
     renderPlantUML(container);
 
+    await hydrateGitHubCards(container);
     initWaline(slug);
     updateMeta(frontMatter.title||slug, frontMatter.description||'');
   } catch (err) {
@@ -943,7 +1116,7 @@ function updateMeta(title, desc) {
 }
 
 // ==================== 标签筛选 ====================
-function filterTag(tag) {
+window.filterTag = function filterTag(tag) {
   location.hash = `/?tag=${encodeURIComponent(tag)}`;
 }
 
