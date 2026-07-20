@@ -286,20 +286,35 @@ img[loading="lazy"] {
   padding: 8px 0;
 }
 
-.toc-content mdui-list-item {
-  min-height: 36px;
-  --mdui-list-item-padding: 8px 16px;
+.toc-list {
+  display: flex;
+  flex-direction: column;
 }
 
-.toc-content mdui-list-item.active {
+.toc-link {
+  display: block;
+  padding: 8px 16px;
+  color: rgb(var(--mdui-color-on-surface-variant));
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: var(--mdui-shape-corner-small);
+  margin: 1px 8px;
+  transition: background 0.15s, color 0.15s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toc-link:hover {
   background: rgba(var(--mdui-color-primary), 0.08);
   color: rgb(var(--mdui-color-primary));
 }
 
-.toc-item-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.toc-link.active {
+  background: rgba(var(--mdui-color-primary), 0.12);
+  color: rgb(var(--mdui-color-primary));
+  font-weight: 500;
 }
 
 /* 手机端 (< 840px) */

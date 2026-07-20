@@ -177,23 +177,22 @@ function generateTOC(container) {
   }
 
   tocToggle.style.display = '';
-  let html = '<mdui-list>';
+  let html = '<div class="toc-list">';
   headings.forEach((h, i) => {
     const id = `heading-${i}`;
     h.id = id;
     const level = parseInt(h.tagName[1]);
-    const padding = (level - 1) * 16;
-    html += `<mdui-list-item rounded style="padding-left:${padding}px" data-target="${id}">`
-           + `<div slot="headline" class="toc-item-text">${escapeHtml(h.textContent)}</div>`
-           + `</mdui-list-item>`;
+    const padding = (level - 1) * 12 + 8;
+    html += `<a href="#${id}" class="toc-link" style="padding-left:${padding}px" data-target="${id}">${escapeHtml(h.textContent)}</a>`;
   });
-  html += '</mdui-list>';
+  html += '</div>';
   tocContent.innerHTML = html;
 
   // 点击跳转
-  tocContent.querySelectorAll('mdui-list-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const target = $(item.dataset.target);
+  tocContent.querySelectorAll('.toc-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = $(link.dataset.target);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         if (isMobile) tocSidebar.classList.remove('open');
@@ -205,9 +204,10 @@ function generateTOC(container) {
   if (tocObserver) tocObserver.disconnect();
   tocObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      const item = tocContent.querySelector(`[data-target="${entry.target.id}"]`);
-      if (item) {
-        item.classList.toggle('active', entry.isIntersecting);
+      const link = tocContent.querySelector(`[data-target="${entry.target.id}"]`);
+      if (link) {
+        tocContent.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+        if (entry.isIntersecting) link.classList.add('active');
       }
     });
   }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
@@ -603,10 +603,9 @@ async function renderArchive(container) {
       <div class="mdui-typescale-title-medium" style="margin-bottom:12px;color:rgb(var(--mdui-color-primary));">${m} <span style="opacity:0.6;font-size:14px;">(${ps.length} 篇)</span></div>
       <mdui-list>`;
     ps.forEach(p => {
-      html += `<mdui-list-item rounded href="#/post/${p.slug}">
-        <div slot="headline">${escapeHtml(p.title)}</div>
-        <div slot="description">${formatDate(p.date)} · ${(p.tags||[]).join(', ')}</div>
-      </mdui-list-item>`;
+      const title = escapeHtml(p.title).replace(/"/g, '&quot;');
+      const desc = `${formatDate(p.date)}${(p.tags||[]).length ? ' · ' + (p.tags||[]).join(', ') : ''}`.replace(/"/g, '&quot;');
+      html += `<mdui-list-item rounded href="#/post/${p.slug}" headline="${title}" description="${desc}"></mdui-list-item>`;
     });
     html += '</mdui-list></div>';
   });
@@ -720,10 +719,9 @@ async function renderFriendDetail(container, params) {
 
     let list = '<mdui-list>';
     rssData.items.slice(0, 10).forEach(item => {
-      list += `<mdui-list-item rounded href="${escapeHtml(item.link)}" target="_blank" rel="noopener">
-        <div slot="headline">${escapeHtml(item.title)}</div>
-        <div slot="description">${formatDate(item.pubDate)}</div>
-      </mdui-list-item>`;
+      const title = escapeHtml(item.title).replace(/"/g, '&quot;');
+      const date = formatDate(item.pubDate).replace(/"/g, '&quot;');
+      list += `<mdui-list-item rounded href="${escapeHtml(item.link)}" target="_blank" rel="noopener" headline="${title}" description="${date}"></mdui-list-item>`;
     });
     list += '</mdui-list>';
     rssContainer.innerHTML = list;
