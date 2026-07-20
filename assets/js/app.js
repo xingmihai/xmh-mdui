@@ -606,106 +606,22 @@ async function renderHome(container, params = {}) {
 
 async function renderPost(container, params) {
   const { slug } = params;
-
-  // 先获取文章元数据，判断是否为 MDX
-  let postMeta = null;
-  try {
-    await loadPosts();
-    postMeta = postsCache.find(p => p.slug === slug);
-  } catch (e) {}
-
-  // ========== MDX 文章渲染 ==========
-  if (postMeta && postMeta.format === 'mdx') {
-    try {
-      const res = await fetch(`/posts-html/${slug}.html`);
-      if (!res.ok) throw new Error('404');
-      const htmlBody = await res.text();
-
-      let html = '';
-      if (postMeta.cover) {
-        html += `<img src="${escapeHtml(postMeta.cover)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--mdui-shape-corner-large);margin-bottom:24px;" alt="文章封面" data-zoomable>`;
-      }
-      html += `
-        <div style="margin-bottom:24px;">
-          <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(postMeta.title)}</h1>
-          <div class="mdui-typescale-body-small" style="opacity:0.7;">
-            <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
-            ${formatDate(postMeta.date)} ·
-            ${(postMeta.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
-          </div>
-        </div>
-        <article class="mdui-prose post-content">${htmlBody}</article>
-
-        <mdui-divider style="margin:32px 0;"></mdui-divider>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
-          <div class="mdui-typescale-body-small" style="opacity:0.7;">
-            本文链接：<a href="${CONFIG.siteUrl}/#/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/#/post/${slug}',2000);">${CONFIG.siteUrl}/#/post/${slug}</a>
-          </div>
-        </div>
-
-        <div style="margin-top:24px;"><div id="waline"></div></div>
-      `;
-      container.innerHTML = html;
-
-      // 代码高亮
-      container.querySelectorAll('pre code').forEach(b => {
-        if (window.hljs) hljs.highlightElement(b);
-      });
-
-      // 代码复制按钮
-      initCodeCopy(container);
-
-      // 图片灯箱
-      container.querySelectorAll('img').forEach(img => {
-        if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
-        if (!img.hasAttribute('data-zoomable')) img.setAttribute('data-zoomable', '');
-      });
-      initImageZoom(container);
-
-      // 生成目录
-      generateTOC(container);
-
-      initWaline(slug);
-      updateMeta(postMeta.title, postMeta.description||'');
-      return;
-    } catch (err) {
-      render404(container);
-      return;
-    }
-  }
-
-  // ========== 原有 Markdown 文章渲染 ==========
   try {
     const res = await fetch(`${CONFIG.postsDir}${slug}.md`);
     if (!res.ok) throw new Error('404');
     const md = await res.text();
     const { frontMatter, content } = parseFrontMatter(md);
-    let htmlContent = marked.parse(content);
-
-// 自定义语法：::github{card="用户名/仓库名" desc="描述"}
-htmlContent = htmlContent.replace(
+    // ========== 自定义语法：GitHub 仓库卡片 ==========
+let processedContent = content.replace(
   /::github\{card="([^"]+)"(?:\s+desc="([^"]*)")?\}/g,
   (match, repo, desc = 'GitHub Repository') => {
     const [user, repoName] = repo.split('/');
-    return `
-<mdui-card class="gh-card" onclick="window.open('https://github.com/${repo}','_blank')">
-  <div class="gh-header">
-    <img class="gh-avatar" src="https://github.com/${user}.png" alt="${user}">
-    <div class="gh-info">
-      <div class="gh-name">${user} / ${repoName}</div>
-      <div class="gh-desc">${desc}</div>
-    </div>
-    <mdui-icon name="open_in_new" style="opacity:0.4"></mdui-icon>
-  </div>
-  <div class="gh-badges">
-    <a href="https://github.com/${repo}/stargazers" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/${repo}?style=flat&logo=github&label=Stars" alt="Stars"></a>
-    <a href="https://github.com/${repo}/network/members" target="_blank" rel="noopener"><img src="https://img.shields.io/github/forks/${repo}?style=flat&logo=github&label=Forks" alt="Forks"></a>
-    <a href="https://github.com/${repo}/blob/main/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/${repo}?style=flat" alt="License"></a>
-  </div>
-</mdui-card>`;
+    return `<div class="gh-wrap"><mdui-card class="gh-card" onclick="window.open('https://github.com/${repo}','_blank')"><div class="gh-header"><img class="gh-avatar" src="https://github.com/${user}.png" alt="${user}"><div class="gh-info"><div class="gh-name">${user} / ${repoName}</div><div class="gh-desc">${desc}</div></div><mdui-icon name="open_in_new" style="opacity:0.4"></mdui-icon></div><div class="gh-badges"><a href="https://github.com/${repo}/stargazers" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/${repo}?style=flat&logo=github&label=Stars" alt="Stars"></a><a href="https://github.com/${repo}/network/members" target="_blank" rel="noopener"><img src="https://img.shields.io/github/forks/${repo}?style=flat&logo=github&label=Forks" alt="Forks"></a><a href="https://github.com/${repo}/blob/main/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/${repo}?style=flat" alt="License"></a></div></mdui-card></div>`;
   }
 );
+
+let htmlContent = marked.parse(processedContent);
+// ================================================
 
     // 后处理：将 mermaid 代码块替换为 mermaid 容器
     htmlContent = htmlContent.replace(
@@ -731,7 +647,7 @@ htmlContent = htmlContent.replace(
         <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(frontMatter.title||slug)}</h1>
         <div class="mdui-typescale-body-small" style="opacity:0.7;">
           <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
-          ${formatDate(frontMatter.date)} ·
+          ${formatDate(frontMatter.date)} · 
           <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
           ${words} 字 ·
           ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
@@ -781,7 +697,6 @@ htmlContent = htmlContent.replace(
     render404(container);
   }
 }
-
 
 async function renderArchive(container) {
   const posts = await loadPosts();
