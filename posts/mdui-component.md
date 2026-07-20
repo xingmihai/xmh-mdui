@@ -1,6 +1,6 @@
 ---
 title: MDUI 组件拓展
-date: 2026-07-21
+date: 2026-07-20
 tags: ["MDUI", "教程"]
 description: 本文展示了 MDUI v2 中各类组件的实际效果，包括按钮、卡片、输入框、列表、进度条、对话框等，方便快速查阅组件样式。
 cover: https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200
