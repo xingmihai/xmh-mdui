@@ -217,6 +217,12 @@ function generateTOC(container) {
 
 // ==================== 搜索系统（Fuse.js） ====================
 async function initSearch() {
+  // 检查 Fuse.js 是否加载成功
+  if (typeof Fuse === 'undefined') {
+    console.error('Fuse.js 未加载，搜索功能不可用');
+    return;
+  }
+
   try {
     const res = await fetch('/search.json');
     if (!res.ok) throw new Error(`search.json ${res.status}`);
@@ -272,7 +278,7 @@ async function initSearch() {
       dropdown.style.display = 'block';
     };
 
-    // 核心修复：穿透 Shadow DOM 在内部 input 上监听
+    // 核心修复：在 shadowRoot 内部 input 上监听（最可靠）
     const bindInput = () => {
       try {
         const nativeInput = input.shadowRoot && input.shadowRoot.querySelector('input');
@@ -290,7 +296,7 @@ async function initSearch() {
       });
     }
 
-    // 后备：keyup
+    // 后备：keyup 事件
     input.addEventListener('keyup', doSearch);
 
     // 聚焦恢复
