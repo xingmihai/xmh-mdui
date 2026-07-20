@@ -634,6 +634,16 @@ async function renderPost(container, params) {
       const parsed = parseFrontMatter(md);
       frontMatter = parsed.frontMatter;
       content = parsed.content;
+
+      // 自定义语法：GitHub 仓库卡片
+      content = content.replace(
+        /::github\{card="([^"]+)"(?:\s+desc="([^"]*)")?\}/g,
+        (match, repo, desc = 'GitHub Repository') => {
+          const [user, repoName] = repo.split('/');
+          return `<div class="gh-wrap"><mdui-card class="gh-card" variant="filled" href="https://github.com/${repo}" target="_blank" clickable><div class="gh-header"><div class="gh-avatar-wrap"><img class="gh-avatar" src="https://github.com/${user}.png" alt="${user}"></div><div class="gh-info"><div class="gh-name">${user} / ${repoName}</div><div class="gh-desc">${desc}</div></div><mdui-icon name="open_in_new" style="opacity:0.4"></mdui-icon></div><div class="gh-badges"><a href="https://github.com/${repo}/stargazers" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/${repo}?style=flat&logo=github&label=Stars" alt="Stars"></a><a href="https://github.com/${repo}/network/members" target="_blank" rel="noopener"><img src="https://img.shields.io/github/forks/${repo}?style=flat&logo=github&label=Forks" alt="Forks"></a><a href="https://github.com/${repo}/blob/main/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/${repo}?style=flat" alt="License"></a></div></mdui-card></div>`;
+        }
+      );
+
       htmlContent = marked.parse(content);
 
       // 后处理：将 mermaid 代码块替换为 mermaid 容器
