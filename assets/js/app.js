@@ -606,6 +606,76 @@ async function renderHome(container, params = {}) {
 
 async function renderPost(container, params) {
   const { slug } = params;
+
+  // 先获取文章元数据，判断是否为 MDX
+  let postMeta = null;
+  try {
+    await loadPosts();
+    postMeta = postsCache.find(p => p.slug === slug);
+  } catch (e) {}
+
+  // ========== MDX 文章渲染 ==========
+  if (postMeta && postMeta.format === 'mdx') {
+    try {
+      const res = await fetch(`/posts-html/${slug}.html`);
+      if (!res.ok) throw new Error('404');
+      const htmlBody = await res.text();
+
+      let html = '';
+      if (postMeta.cover) {
+        html += `<img src="${escapeHtml(postMeta.cover)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--mdui-shape-corner-large);margin-bottom:24px;" alt="文章封面" data-zoomable>`;
+      }
+      html += `
+        <div style="margin-bottom:24px;">
+          <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(postMeta.title)}</h1>
+          <div class="mdui-typescale-body-small" style="opacity:0.7;">
+            <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
+            ${formatDate(postMeta.date)} ·
+            ${(postMeta.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+          </div>
+        </div>
+        <article class="mdui-prose post-content">${htmlBody}</article>
+
+        <mdui-divider style="margin:32px 0;"></mdui-divider>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+          <div class="mdui-typescale-body-small" style="opacity:0.7;">
+            本文链接：<a href="${CONFIG.siteUrl}/#/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/#/post/${slug}',2000);">${CONFIG.siteUrl}/#/post/${slug}</a>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;"><div id="waline"></div></div>
+      `;
+      container.innerHTML = html;
+
+      // 代码高亮
+      container.querySelectorAll('pre code').forEach(b => {
+        if (window.hljs) hljs.highlightElement(b);
+      });
+
+      // 代码复制按钮
+      initCodeCopy(container);
+
+      // 图片灯箱
+      container.querySelectorAll('img').forEach(img => {
+        if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+        if (!img.hasAttribute('data-zoomable')) img.setAttribute('data-zoomable', '');
+      });
+      initImageZoom(container);
+
+      // 生成目录
+      generateTOC(container);
+
+      initWaline(slug);
+      updateMeta(postMeta.title, postMeta.description||'');
+      return;
+    } catch (err) {
+      render404(container);
+      return;
+    }
+  }
+
+  // ========== 原有 Markdown 文章渲染 ==========
   try {
     const res = await fetch(`${CONFIG.postsDir}${slug}.md`);
     if (!res.ok) throw new Error('404');
