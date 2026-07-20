@@ -448,9 +448,9 @@ requirementDiagram
 多维度能力评估。
 
 ```mermaid
-radar
-    title Tech Stack Radar
-    axis Performance, Maintainability, Community, Learning, Ecosystem
+radar-beta
+    title "Framework Comparison"
+    axis Performance, Maintainability, Community, LearningCurve, Ecosystem
     scale 0 --> 10
     React: [9, 8, 10, 6, 10]
     Vue: [8, 9, 9, 9, 9]
