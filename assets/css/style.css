@@ -510,6 +510,7 @@ img[loading="lazy"] {
   font-size: 14px;
 }
 
+
 /* Mermaid 图表容器 */
 .mermaid {
   margin: 1.5rem auto;
@@ -528,13 +529,6 @@ img[loading="lazy"] {
 }
 
 /* Mermaid 暗色主题适配 */
-.mdui-theme-dark .mermaid,
-.mdui-theme-auto .mermaid {
+.mdui-theme-dark .mermaid {
   background: rgb(var(--mdui-color-surface-container-highest));
-}
-
-/* 代码块中排除 mermaid 的复制按钮 */
-.mermaid + .code-copy-btn,
-.mermaid .code-copy-btn {
-  display: none !important;
 }
