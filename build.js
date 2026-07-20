@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { compileSync } = require('@mdx-js/mdx');
+const remarkGfm = require('remark-gfm');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const { jsx, jsxs, Fragment } = require('react/jsx-runtime');
@@ -88,6 +89,7 @@ function compileMDXToHtml(mdxBody) {
   const vfile = compileSync(mdxBody, {
     outputFormat: 'function-body',
     development: false,
+    remarkPlugins: [remarkGfm], // 启用 GFM：表格、删除线、任务列表等
   });
   const code = String(vfile);
 
@@ -100,7 +102,6 @@ function compileMDXToHtml(mdxBody) {
   });
 
   const MDXContent = result.default;
-  // 通过 components prop 传入自定义组件
   return renderToStaticMarkup(
     React.createElement(MDXContent, { components: MDX_COMPONENTS })
   );
