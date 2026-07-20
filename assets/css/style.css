@@ -537,7 +537,7 @@ img[loading="lazy"] {
 /* ========== GitHub 卡片自定义语法 ========== */
 .gh-wrap { margin: 16px 0; }
 .gh-card {
-  padding: 480px;
+  padding: 16px;
   cursor: pointer;
   max-width: 480px;
   display: block;
@@ -554,7 +554,8 @@ img[loading="lazy"] {
   height: 48px;
   border-radius: 50%;
   flex-shrink: 0;
-  object-fit: cover;  /* 加这行 */
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
 }
 .gh-info {
   flex: 1;
