@@ -533,11 +533,109 @@ img[loading="lazy"] {
   background: rgb(var(--mdui-color-surface-container-highest));
 }
 
+/* ==================== MDX 组件样式 ==================== */
 
-/* ========== GitHub 卡片自定义语法 ========== */
-.gh-wrap { margin: 16px 0; }
+.mdx-alert {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--mdui-shape-corner-medium);
+  margin: 16px 0;
+  border-left: 4px solid;
+  align-items: flex-start;
+}
+
+.mdx-alert-info {
+  background: rgba(var(--mdui-color-primary), 0.08);
+  border-color: rgb(var(--mdui-color-primary));
+}
+
+.mdx-alert-warning {
+  background: rgba(var(--mdui-color-tertiary), 0.08);
+  border-color: rgb(var(--mdui-color-tertiary));
+}
+
+.mdx-alert-success {
+  background: rgba(var(--mdui-color-secondary), 0.08);
+  border-color: rgb(var(--mdui-color-secondary));
+}
+
+.mdx-alert-error {
+  background: rgba(var(--mdui-color-error), 0.08);
+  border-color: rgb(var(--mdui-color-error));
+}
+
+.mdx-alert-icon {
+  font-size: 20px;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.mdx-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.mdx-alert-content > *:first-child { margin-top: 0; }
+.mdx-alert-content > *:last-child { margin-bottom: 0; }
+
+.mdx-card {
+  border: 1px solid rgba(var(--mdui-color-outline-variant), 0.5);
+  border-radius: var(--mdui-shape-corner-large);
+  padding: 20px;
+  margin: 16px 0;
+  background: rgb(var(--mdui-color-surface-container-low));
+}
+
+.mdx-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: rgb(var(--mdui-color-primary));
+}
+
+.mdx-card-body > *:first-child { margin-top: 0; }
+.mdx-card-body > *:last-child { margin-bottom: 0; }
+
+.mdx-badge {
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 6px;
+  line-height: 1.5;
+}
+
+.mdx-badge-primary {
+  background: rgba(var(--mdui-color-primary), 0.15);
+  color: rgb(var(--mdui-color-primary));
+}
+
+.mdx-badge-success {
+  background: rgba(var(--mdui-color-tertiary), 0.15);
+  color: rgb(var(--mdui-color-tertiary));
+}
+
+.mdx-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.mdx-column {
+  min-width: 0;
+}
+
+.mdx-column > *:first-child { margin-top: 0; }
+.mdx-column > *:last-child { margin-bottom: 0; }
+
+/* GitHub 卡片自定义语法 */
 .gh-card {
   padding: 16px;
+  margin: 16px 0;
+  cursor: pointer;
   max-width: 480px;
   display: block;
 }
@@ -548,20 +646,11 @@ img[loading="lazy"] {
   margin-bottom: 12px;
   pointer-events: none;
 }
-.gh-avatar-wrap {
+.gh-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  overflow: hidden;
   flex-shrink: 0;
-  flex-shrink: 0;
-}
-.post-content .gh-avatar-wrap img.gh-avatar {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: fill;
-  display: block;
-  border-radius: 0 !important;
 }
 .gh-info {
   flex: 1;
@@ -570,12 +659,14 @@ img[loading="lazy"] {
 .gh-name {
   font-size: var(--mdui-typescale-title-medium-size);
   font-weight: 500;
+  line-height: var(--mdui-typescale-title-medium-line-height);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .gh-desc {
   font-size: var(--mdui-typescale-body-small-size);
+  line-height: var(--mdui-typescale-body-small-line-height);
   opacity: 0.6;
   margin-top: 2px;
 }
@@ -596,4 +687,3 @@ img[loading="lazy"] {
   min-height: auto !important;
   vertical-align: middle;
 }
-/* ========================================== */
