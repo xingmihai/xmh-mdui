@@ -538,7 +538,6 @@ img[loading="lazy"] {
 .gh-wrap { margin: 16px 0; }
 .gh-card {
   padding: 16px;
-  cursor: pointer;
   max-width: 480px;
   display: block;
 }
@@ -549,11 +548,21 @@ img[loading="lazy"] {
   margin-bottom: 12px;
   pointer-events: none;
 }
-.gh-avatar {
+.gh-avatar-wrap {
   width: 48px;
   height: 48px;
   border-radius: 50%;
+  overflow: hidden;
   flex-shrink: 0;
+  flex-shrink: 0;
+}
+.post-content .gh-avatar-wrap img.gh-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  border-radius: 0 !important;
 }
 .gh-info {
   flex: 1;
