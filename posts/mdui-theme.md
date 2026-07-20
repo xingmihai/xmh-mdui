@@ -38,7 +38,7 @@ MDUI 使用 CSS 自定义属性实现设计令牌，可以全局修改样式：
 
 
 
-graph TD
+```graph TD
     Start([画面帧输入]) --> CheckName{1. 前置哨兵: Name Box 是否有字?}
     CheckName -- 无文字 --> Exit([Fail-Fast 退出: 非对话场景])
     CheckName -- 有文字 --> CheckTitle{2. 检测 Title 称号框}
@@ -60,3 +60,4 @@ graph TD
     CheckC2 -- 否 --> CheckC1{7. 检测 Choice1?}
     CheckC1 -- 存在 --> C1[1 个分支选项]
     CheckC1 -- 否 --> C0[无分支纯对话场景]
+```
