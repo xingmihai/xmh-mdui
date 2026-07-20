@@ -269,7 +269,7 @@ pre:hover .code-copy-btn {
 /* 懒加载占位 */
 img[loading="lazy"] {
   background: rgb(var(--mdui-color-surface-variant));
-  min-height: 120px;
+  /* min-height: 120px; */
 }
 
 /* 页脚 */
