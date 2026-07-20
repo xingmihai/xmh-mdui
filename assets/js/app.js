@@ -588,16 +588,21 @@ async function renderPost(container, params) {
     if (!res.ok) throw new Error('404');
     const md = await res.text();
     const { frontMatter, content } = parseFrontMatter(md);
+    let htmlContent = marked.parse(content);
 
-    // 提取 mermaid 代码块，替换为占位符
-    const mermaidBlocks = [];
-    let mermaidIdx = 0;
-    const processedMd = content.replace(/```mermaid\s*\n([\s\S]*?)```/g, (match, code) => {
-      mermaidBlocks.push(code.trim());
-      return `<div class="mermaid-placeholder" data-mermaid-idx="${mermaidIdx++}"></div>`;
-    });
-
-    const htmlContent = marked.parse(processedMd);
+    // 将 mermaid 代码块替换为 mermaid 容器
+    htmlContent = htmlContent.replace(
+      /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+      (match, code) => {
+        const decoded = code
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        return `<div class="mermaid">${decoded}</div>`;
+      }
+    );
     const words = countWords(content);
 
     let html = '';
@@ -628,18 +633,6 @@ async function renderPost(container, params) {
       <div style="margin-top:24px;"><div id="waline"></div></div>
     `;
     container.innerHTML = html;
-
-    // DOM 替换 mermaid 占位符为 mermaid 容器
-    container.querySelectorAll('.mermaid-placeholder').forEach(placeholder => {
-      const idx = parseInt(placeholder.dataset.mermaidIdx, 10);
-      const code = mermaidBlocks[idx];
-      if (code !== undefined) {
-        const div = document.createElement('div');
-        div.className = 'mermaid';
-        div.textContent = code;
-        placeholder.replaceWith(div);
-      }
-    });
 
     // 代码高亮
     container.querySelectorAll('pre code').forEach(b => {
