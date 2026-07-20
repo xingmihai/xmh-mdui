@@ -26,7 +26,9 @@ const escapeHtml = str => {
   return div.innerHTML;
 };
 const formatDate = str => {
+  if (!str) return '未知日期';
   const d = new Date(str);
+  if (isNaN(d.getTime())) return '未知日期';
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 };
 const debounce = (fn, wait) => {
@@ -607,36 +609,50 @@ async function renderHome(container, params = {}) {
 async function renderPost(container, params) {
   const { slug } = params;
   try {
-    const res = await fetch(`${CONFIG.postsDir}${slug}.md`);
-    if (!res.ok) throw new Error('404');
-    const md = await res.text();
-    const { frontMatter, content } = parseFrontMatter(md);
-    // ========== 自定义语法：GitHub 仓库卡片 ==========
-let processedContent = content.replace(
-  /::github\{card="([^"]+)"(?:\s+desc="([^"]*)")?\}/g,
-  (match, repo, desc = 'GitHub Repository') => {
-    const [user, repoName] = repo.split('/');
-    return `<div class="gh-wrap"><mdui-card class="gh-card" variant="filled" href="https://github.com/${repo}" target="_blank" clickable><div class="gh-header"><div class="gh-avatar-wrap"><img class="gh-avatar" src="https://github.com/${user}.png" alt="${user}"></div><div class="gh-info"><div class="gh-name">${user} / ${repoName}</div><div class="gh-desc">${desc}</div></div><mdui-icon name="open_in_new" style="opacity:0.4"></mdui-icon></div><div class="gh-badges"><a href="https://github.com/${repo}/stargazers" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/${repo}?style=flat&logo=github&label=Stars" alt="Stars"></a><a href="https://github.com/${repo}/network/members" target="_blank" rel="noopener"><img src="https://img.shields.io/github/forks/${repo}?style=flat&logo=github&label=Forks" alt="Forks"></a><a href="https://github.com/${repo}/blob/main/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/${repo}?style=flat" alt="License"></a></div></mdui-card></div>`;
-  }
-);
+    // 先从 search.json 获取文章元数据，判断格式
+    const posts = await loadPosts();
+    const postMeta = posts.find(p => p.slug === slug);
+    const isMdx = postMeta && postMeta.format === 'mdx';
 
-let htmlContent = marked.parse(processedContent);
-// ================================================
+    let htmlContent = '';
+    let frontMatter = {};
+    let content = '';
+    let words = 0;
 
-    // 后处理：将 mermaid 代码块替换为 mermaid 容器
-    htmlContent = htmlContent.replace(
-      /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
-      (match, code) => {
-        const decoded = code
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        return `<div class="mermaid">${decoded}</div>`;
-      }
-    );
-    const words = countWords(content);
+    if (isMdx) {
+      // MDX 文章：加载编译后的 HTML
+      const res = await fetch(`/posts-html/${slug}.html`);
+      if (!res.ok) throw new Error('404');
+      htmlContent = await res.text();
+      frontMatter = postMeta || {};
+      words = (postMeta && postMeta.content) ? postMeta.content.length : 0;
+    } else {
+      // Markdown 文章：加载 .md 并解析
+      const res = await fetch(`${CONFIG.postsDir}${slug}.md`);
+      if (!res.ok) throw new Error('404');
+      const md = await res.text();
+      const parsed = parseFrontMatter(md);
+      frontMatter = parsed.frontMatter;
+      content = parsed.content;
+      htmlContent = marked.parse(content);
+
+      // 后处理：将 mermaid 代码块替换为 mermaid 容器
+      htmlContent = htmlContent.replace(
+        /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+        (match, code) => {
+          const decoded = code
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'");
+          return `<div class="mermaid">${decoded}</div>`;
+        }
+      );
+      words = countWords(content);
+    }
+
+
 
     let html = '';
     if (frontMatter.cover) {
@@ -677,8 +693,6 @@ let htmlContent = marked.parse(processedContent);
 
     // 图片懒加载 & 灯箱
     container.querySelectorAll('img').forEach(img => {
-      // 跳过 GitHub 卡片内的徽章和头像
-      if (img.closest('.gh-badges') || img.closest('.gh-avatar-wrap')) return;
       if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
       if (!img.hasAttribute('data-zoomable')) img.setAttribute('data-zoomable', '');
     });
