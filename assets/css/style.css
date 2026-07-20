@@ -511,8 +511,8 @@ img[loading="lazy"] {
 }
 
 
-/* Mermaid 图表容器 */
-.mermaid {
+/* PlantUML 图表容器 */
+.plantuml {
   margin: 1.5rem auto;
   text-align: center;
   overflow-x: auto;
@@ -522,13 +522,13 @@ img[loading="lazy"] {
   border: 1px solid rgba(var(--mdui-color-outline-variant), 0.3);
 }
 
-.mermaid svg {
+.plantuml-img {
   max-width: 100%;
   height: auto;
   display: inline-block;
 }
 
-/* Mermaid 暗色主题适配 */
-.mdui-theme-dark .mermaid {
+/* PlantUML 暗色主题适配 */
+.mdui-theme-dark .plantuml {
   background: rgb(var(--mdui-color-surface-container-highest));
 }

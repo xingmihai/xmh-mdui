@@ -67,6 +67,29 @@ async function renderMermaid(container) {
   }
 }
 
+// ==================== PlantUML 支持 ====================
+function renderPlantUML(container) {
+  if (typeof plantumlEncoder === 'undefined') return;
+  container.querySelectorAll('pre code.language-plantuml').forEach(code => {
+    const pre = code.parentElement;
+    const text = code.textContent;
+    try {
+      const encoded = plantumlEncoder.encode(text);
+      const img = document.createElement('img');
+      img.src = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+      img.alt = 'PlantUML Diagram';
+      img.className = 'plantuml-img';
+      img.loading = 'lazy';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'plantuml';
+      wrapper.appendChild(img);
+      pre.replaceWith(wrapper);
+    } catch (e) {
+      console.error('PlantUML 编码失败:', e);
+    }
+  });
+}
+
 // ==================== 主题系统 ====================
 function initTheme() {
   const btnLight = $('theme-light');
@@ -590,7 +613,7 @@ async function renderPost(container, params) {
     const { frontMatter, content } = parseFrontMatter(md);
     let htmlContent = marked.parse(content);
 
-    // 将 mermaid 代码块替换为 mermaid 容器
+    // 后处理：将 mermaid 代码块替换为 mermaid 容器
     htmlContent = htmlContent.replace(
       /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
       (match, code) => {
@@ -654,6 +677,9 @@ async function renderPost(container, params) {
 
     // 渲染 Mermaid 图表
     renderMermaid(container);
+
+    // 渲染 PlantUML 图表
+    renderPlantUML(container);
 
     initWaline(slug);
     updateMeta(frontMatter.title||slug, frontMatter.description||'');
