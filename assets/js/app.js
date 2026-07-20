@@ -79,6 +79,10 @@ function initTheme() {
     html.classList.add(`mdui-theme-${theme}`);
     currentTheme = theme;
     localStorage.setItem('theme', theme);
+    // 同步 Mermaid 主题
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ theme: getMermaidTheme() });
+    }
 
     [btnLight, btnDark, btnAuto].forEach(btn => {
       if (btn) btn.classList.remove('active');
@@ -584,18 +588,16 @@ async function renderPost(container, params) {
     if (!res.ok) throw new Error('404');
     const md = await res.text();
     const { frontMatter, content } = parseFrontMatter(md);
-    let htmlContent = marked.parse(content);
 
-    // 后处理：将 mermaid 代码块替换为 mermaid 容器
-    htmlContent = htmlContent.replace(
-      /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
-      (match, code) => {
-        // 解码 HTML 实体（marked 会自动转义）
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = code;
-        return `<div class="mermaid">${textarea.value}</div>`;
-      }
-    );
+    // 提取 mermaid 代码块，替换为占位符
+    const mermaidBlocks = [];
+    let mermaidIdx = 0;
+    const processedMd = content.replace(/```mermaid\s*\n([\s\S]*?)```/g, (match, code) => {
+      mermaidBlocks.push(code.trim());
+      return `<div class="mermaid-placeholder" data-mermaid-idx="${mermaidIdx++}"></div>`;
+    });
+
+    const htmlContent = marked.parse(processedMd);
     const words = countWords(content);
 
     let html = '';
@@ -626,6 +628,18 @@ async function renderPost(container, params) {
       <div style="margin-top:24px;"><div id="waline"></div></div>
     `;
     container.innerHTML = html;
+
+    // DOM 替换 mermaid 占位符为 mermaid 容器
+    container.querySelectorAll('.mermaid-placeholder').forEach(placeholder => {
+      const idx = parseInt(placeholder.dataset.mermaidIdx, 10);
+      const code = mermaidBlocks[idx];
+      if (code !== undefined) {
+        const div = document.createElement('div');
+        div.className = 'mermaid';
+        div.textContent = code;
+        placeholder.replaceWith(div);
+      }
+    });
 
     // 代码高亮
     container.querySelectorAll('pre code').forEach(b => {
