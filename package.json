@@ -1,0 +1,16 @@
+{
+  "name": "mdui-v2-blog",
+  "version": "1.0.0",
+  "description": "Pure static blog powered by MDUI v2",
+  "scripts": {
+    "build": "node build-rss.js"
+  },
+  "dependencies": {
+    "marked": "15.0.0",
+    "highlight.js": "11.9.0",
+    "fuse.js": "7.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>星觅海的博客</title>
+  <meta name="description" content="A pure static blog built with MDUI v2">
+  <meta property="og:title" content="My Blog">
+  <meta property="og:description" content="A pure static blog built with MDUI v2">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mdui.xmhai.cn">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2.1.3/mdui.css">
+  <script src="https://unpkg.com/mdui@2.1.3/mdui.global.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.5.0/dist/fuse.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@waline/client@3.3.0/dist/waline.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const html = document.documentElement;
+      html.classList.remove('mdui-theme-light', 'mdui-theme-dark', 'mdui-theme-auto');
+      if (saved === 'dark') html.classList.add('mdui-theme-dark');
+      else if (saved === 'light') html.classList.add('mdui-theme-light');
+      else html.classList.add('mdui-theme-auto');
+    })();
+  </script>
+</head>
+<body>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <mdui-top-app-bar class="top-app-bar">
+    <mdui-button-icon id="menu-btn">
+      <mdui-icon name="menu"></mdui-icon>
+    </mdui-button-icon>
+    <mdui-top-app-bar-title>My Blog</mdui-top-app-bar-title>
+  </mdui-top-app-bar>
+  <mdui-card class="sidebar" id="sidebar" variant="elevated">
+    <div class="sidebar-inner">
+      <div class="site-brand">
+        <mdui-avatar src="https://q1.qlogo.cn/g?b=qq&nk=1498934815&s=100" alt="avatar" class="site-avatar"></mdui-avatar>
+        <div class="sidebar-text site-meta">
+          <div class="mdui-typescale-title-medium site-name">星觅海</div>
+          <div class="mdui-typescale-body-small site-desc">一起慢慢进步</div>
+        </div>
+      </div>
+      <div class="search-wrap sidebar-text">
+        <mdui-text-field id="search-input" variant="outlined" placeholder="搜索文章..." icon="search" helper="输入关键词实时搜索" class="search-field"></mdui-text-field>
+        <mdui-card class="search-dropdown" id="search-dropdown" variant="elevated">
+          <mdui-list id="search-results"></mdui-list>
+        </mdui-card>
+      </div>
+      <mdui-divider class="nav-divider"></mdui-divider>
+      <mdui-list class="nav-list">
+        <mdui-list-item rounded href="#/" id="nav-home">
+          <mdui-icon name="home" slot="icon"></mdui-icon>
+          <div class="sidebar-text">首页</div>
+        </mdui-list-item>
+        <mdui-list-item rounded href="#/archive" id="nav-archive">
+          <mdui-icon name="archive" slot="icon"></mdui-icon>
+          <div class="sidebar-text">归档</div>
+        </mdui-list-item>
+        <mdui-list-item rounded href="#/about" id="nav-about">
+          <mdui-icon name="person" slot="icon"></mdui-icon>
+          <div class="sidebar-text">关于</div>
+        </mdui-list-item>
+        <mdui-list-item rounded href="#/friends" id="nav-friends">
+          <mdui-icon name="group" slot="icon"></mdui-icon>
+          <div class="sidebar-text">朋友</div>
+        </mdui-list-item>
+      </mdui-list>
+      <mdui-divider class="nav-divider"></mdui-divider>
+      <div class="theme-wrap">
+        <mdui-icon-button id="theme-btn" title="切换主题">
+          <mdui-icon name="brightness_auto"></mdui-icon>
+        </mdui-icon-button>
+      </div>
+    </div>
+  </mdui-card>
+  <div class="main-content" id="main-content">
+    <div class="app-bar-spacer"></div>
+    <div id="page-container" class="page-transition"></div>
+    <footer class="footer">
+      <div class="footer-rss">
+        <a href="/rss.xml" class="footer-link">
+          <mdui-icon name="rss_feed"></mdui-icon>
+          <span>RSS 订阅</span>
+        </a>
+      </div>
+      <div class="mdui-typescale-body-small footer-copy">
+        © <span id="year"></span> 星觅海 · <span id="pageviews">加载中...</span> · Powered by MDUI & Cloudflare
+      </div>
+      <div class="mdui-typescale-body-small footer-icp"></div>
+    </footer>
+  </div>
+  <script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@3.3.0/dist/waline.js';
+    window.WalineInit = init;
+  </script>
+  <script src="/assets/js/app.js"></script>
+</body>
+</html>

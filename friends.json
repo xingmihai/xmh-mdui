@@ -1,0 +1,9 @@
+[
+  {
+    "name": "示例朋友",
+    "url": "https://example.com",
+    "avatar": "https://via.placeholder.com/48",
+    "desc": "一个示例博客",
+    "rss": "https://example.com/rss.xml"
+  }
+]
