@@ -342,7 +342,12 @@ async function handleRoute() {
 async function loadPosts() {
   if (postsCache.length) return postsCache;
   const res = await fetch('/search.json');
+  if (!res.ok) throw new Error(`search.json ${res.status}`);
   postsCache = await res.json();
+  if (!Array.isArray(postsCache)) {
+    console.error('search.json 格式错误:', postsCache);
+    throw new Error('search.json 不是数组');
+  }
   postsCache.sort((a, b) => new Date(b.date) - new Date(a.date));
   return postsCache;
 }
@@ -456,45 +461,60 @@ function initImageZoom(container) {
 
 // ==================== 页面渲染器 ====================
 async function renderHome(container, params = {}) {
-  const posts = await loadPosts();
-  let filtered = posts;
+  try {
+    const posts = await loadPosts();
+    let filtered = posts;
 
-  // 标签筛选支持
-  if (params.tag) {
-    currentTagFilter = params.tag;
-    filtered = posts.filter(p => (p.tags || []).includes(params.tag));
-  } else {
-    currentTagFilter = null;
-  }
+    // 标签筛选支持
+    if (params.tag) {
+      currentTagFilter = params.tag;
+      filtered = posts.filter(p => (p.tags || []).includes(params.tag));
+    } else {
+      currentTagFilter = null;
+    }
 
-  let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">';
-  html += currentTagFilter ? `标签「${escapeHtml(currentTagFilter)}」的文章` : '最新文章';
-  html += '</div>';
-
-  if (currentTagFilter) {
-    html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash='#/'">清除筛选</mdui-chip>`;
-  }
-
-  if (!filtered.length) {
-    html += '<mdui-card style="padding:24px;text-align:center;">暂无文章</mdui-card>';
-  } else {
-    html += '<div style="display:grid;gap:16px;">';
-    filtered.forEach(p => {
-      html += `
-        <mdui-card class="post-card" style="padding:16px;cursor:pointer;" onclick="location.hash='#/post/${p.slug}'">
-          ${p.cover ? `<img src="${escapeHtml(p.cover)}" loading="lazy" style="width:100%;height:200px;object-fit:cover;border-radius:var(--mdui-shape-corner-medium);margin-bottom:12px;" alt="">` : ''}
-          <div class="mdui-typescale-title-large" style="margin-bottom:8px;">${escapeHtml(p.title)}</div>
-          <div class="mdui-typescale-body-small" style="opacity:0.7;margin-bottom:8px;">
-            ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
-          </div>
-          <div class="mdui-typescale-body-medium" style="opacity:0.85;">${escapeHtml(p.description||'')}</div>
-        </mdui-card>
-      `;
-    });
+    let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">';
+    html += currentTagFilter ? `标签「${escapeHtml(currentTagFilter)}」的文章` : '最新文章';
     html += '</div>';
+
+    if (currentTagFilter) {
+      html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash='#/'">清除筛选</mdui-chip>`;
+    }
+
+    if (!filtered.length) {
+      html += '<mdui-card style="padding:24px;text-align:center;">暂无文章</mdui-card>';
+    } else {
+      html += '<div style="display:grid;gap:16px;">';
+      filtered.forEach(p => {
+        html += `
+          <mdui-card class="post-card" style="padding:16px;cursor:pointer;" onclick="location.hash='#/post/${p.slug}'">
+            ${p.cover ? `<img src="${escapeHtml(p.cover)}" loading="lazy" style="width:100%;height:200px;object-fit:cover;border-radius:var(--mdui-shape-corner-medium);margin-bottom:12px;" alt="">` : ''}
+            <div class="mdui-typescale-title-large" style="margin-bottom:8px;">${escapeHtml(p.title)}</div>
+            <div class="mdui-typescale-body-small" style="opacity:0.7;margin-bottom:8px;">
+              ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+            </div>
+            <div class="mdui-typescale-body-medium" style="opacity:0.85;">${escapeHtml(p.description||'')}</div>
+          </mdui-card>
+        `;
+      });
+      html += '</div>';
+    }
+    container.innerHTML = html;
+    updateMeta('首页', '星觅海的个人博客，分享技术文章和生活随笔');
+  } catch (err) {
+    console.error('首页加载失败:', err);
+    container.innerHTML = `
+      <mdui-card style="padding:24px;text-align:center;">
+        <mdui-icon name="error_outline" style="font-size:48px;opacity:0.4;"></mdui-icon>
+        <div class="mdui-typescale-title-medium" style="margin-top:12px;">文章加载失败</div>
+        <div class="mdui-typescale-body-medium" style="opacity:0.7;margin-top:8px;">${escapeHtml(err.message)}</div>
+        <div class="mdui-typescale-body-small" style="opacity:0.5;margin-top:12px;">
+          请检查 search.json 是否存在，以及 posts/ 目录中是否有 .md 文件
+        </div>
+      </mdui-card>
+    `;
+    updateMeta('首页', '星觅海的个人博客');
   }
-  container.innerHTML = html;
-  updateMeta('首页', '星觅海的个人博客，分享技术文章和生活随笔');
 }
 
 async function renderPost(container, params) {
