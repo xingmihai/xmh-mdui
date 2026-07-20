@@ -534,7 +534,7 @@ img[loading="lazy"] {
 }
 
 
-/* ========== GitHub 卡片自定义语法 ========== */
+/* GitHub 卡片自定义语法 */
 .gh-wrap { margin: 16px 0; }
 .gh-card {
   padding: 16px;
@@ -549,19 +549,11 @@ img[loading="lazy"] {
   margin-bottom: 12px;
   pointer-events: none;
 }
-.gh-avatar-wrap {
+.gh-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  overflow: hidden;
   flex-shrink: 0;
-  flex-shrink: 0;
-}
-.post-content .gh-avatar-wrap img.gh-avatar {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-  border-radius: 0 !important;
 }
 .gh-info {
   flex: 1;
@@ -596,4 +588,3 @@ img[loading="lazy"] {
   min-height: auto !important;
   vertical-align: middle;
 }
-/* ========================================== */
