@@ -235,23 +235,32 @@ async function initSearch() {
     const dropdown = $('search-dropdown');
     const list = $('search-results');
 
-    input.addEventListener('input', e => {
-      const q = e.target.value.trim();
-      if (!q) { dropdown.style.display = 'none'; return; }
+    // 修复：使用 input 元素的 value，避免 Shadow DOM 事件重定向问题
+    const doSearch = () => {
+      const q = input.value.trim();
+      if (!q) {
+        list.innerHTML = '';
+        dropdown.style.display = 'none';
+        return;
+      }
+      if (!fuse) return;
 
       const results = fuse.search(q).slice(0, 8);
       list.innerHTML = '';
 
       if (results.length === 0) {
-        list.innerHTML = '<div class="search-no-result">无匹配文章</div>';
+        const empty = document.createElement('mdui-list-item');
+        empty.setAttribute('nonclickable', '');
+        empty.innerHTML = '<div class="search-no-result">无匹配文章</div>';
+        list.appendChild(empty);
       } else {
         results.forEach(r => {
-          const item = document.createElement('div');
-          item.className = 'search-result-item';
-          item.innerHTML = `
-            <div class="search-result-title">${escapeHtml(r.item.title)}</div>
-            <div class="search-result-desc">${escapeHtml(r.item.description || r.item.date)}</div>
-          `;
+          // 修复：使用 mdui-list-item 以兼容 mdui-list 的渲染
+          const item = document.createElement('mdui-list-item');
+          item.setAttribute('rounded', '');
+          item.setAttribute('headline', r.item.title);
+          item.setAttribute('description', r.item.description || formatDate(r.item.date));
+          item.style.cursor = 'pointer';
           item.addEventListener('click', () => {
             location.hash = `#/post/${r.item.slug}`;
             dropdown.style.display = 'none';
@@ -261,11 +270,22 @@ async function initSearch() {
         });
       }
       dropdown.style.display = 'block';
-    });
+    };
 
+    // 同时监听 input 和 keyup，确保兼容性
+    input.addEventListener('input', doSearch);
+
+    // 点击外部关闭下拉框
     document.addEventListener('click', e => {
       if (!input.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.style.display = 'none';
+      }
+    });
+
+    // 输入框获得焦点时，如果有内容则重新显示结果
+    input.addEventListener('focus', () => {
+      if (input.value.trim() && fuse) {
+        dropdown.style.display = 'block';
       }
     });
   } catch (err) {
