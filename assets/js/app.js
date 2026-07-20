@@ -859,7 +859,7 @@ function updateMeta(title, desc) {
 
 // ==================== 标签筛选 ====================
 function filterTag(tag) {
-  location.hash = `?tag=${encodeURIComponent(tag)}`;
+  location.hash = `/?tag=${encodeURIComponent(tag)}`;
 }
 
 // ==================== PWA 注册 ====================
