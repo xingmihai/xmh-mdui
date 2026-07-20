@@ -119,7 +119,10 @@ body {
   max-height: 320px;
   overflow-y: auto;
   display: none;
-  --mdui-elevation-level: 3;
+  background: rgb(var(--mdui-color-surface-container));
+  border-radius: var(--mdui-shape-corner-medium);
+  box-shadow: var(--mdui-elevation-level3);
+  padding: 4px 0;
 }
 
 /* 导航 */

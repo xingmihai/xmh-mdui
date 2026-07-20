@@ -219,7 +219,9 @@ function generateTOC(container) {
 async function initSearch() {
   try {
     const res = await fetch('/search.json');
+    if (!res.ok) throw new Error(`search.json ${res.status}`);
     const data = await res.json();
+
     fuse = new Fuse(data, {
       keys: [
         { name: 'title', weight: 0.4 },
@@ -235,32 +237,29 @@ async function initSearch() {
     const dropdown = $('search-dropdown');
     const list = $('search-results');
 
-    // 修复：不依赖 e.target（Shadow DOM 事件重定向问题），直接读取 input.value
     const doSearch = () => {
-      const q = input.value.trim();
+      const q = (input.value || '').trim();
+
       if (!q) {
         list.innerHTML = '';
         dropdown.style.display = 'none';
         return;
       }
-      if (!fuse) return;
 
+      if (!fuse) return;
       const results = fuse.search(q).slice(0, 8);
       list.innerHTML = '';
 
       if (results.length === 0) {
-        const empty = document.createElement('mdui-list-item');
-        empty.setAttribute('nonclickable', '');
-        empty.innerHTML = '<div class="search-no-result">无匹配文章</div>';
-        list.appendChild(empty);
+        list.innerHTML = '<div class="search-no-result">无匹配文章</div>';
       } else {
         results.forEach(r => {
-          // 修复：使用 mdui-list-item 以兼容 mdui-list 的渲染逻辑
-          const item = document.createElement('mdui-list-item');
-          item.setAttribute('rounded', '');
-          item.setAttribute('headline', r.item.title);
-          item.setAttribute('description', r.item.description || formatDate(r.item.date));
-          item.style.cursor = 'pointer';
+          const item = document.createElement('div');
+          item.className = 'search-result-item';
+          item.innerHTML = `
+            <div class="search-result-title">${escapeHtml(r.item.title)}</div>
+            <div class="search-result-desc">${escapeHtml(r.item.description || formatDate(r.item.date))}</div>
+          `;
           item.addEventListener('click', () => {
             location.hash = `#/post/${r.item.slug}`;
             dropdown.style.display = 'none';
@@ -269,24 +268,43 @@ async function initSearch() {
           list.appendChild(item);
         });
       }
+
       dropdown.style.display = 'block';
     };
 
-    input.addEventListener('input', doSearch);
+    // 核心修复：穿透 Shadow DOM 在内部 input 上监听
+    const bindInput = () => {
+      try {
+        const nativeInput = input.shadowRoot && input.shadowRoot.querySelector('input');
+        if (nativeInput) {
+          nativeInput.addEventListener('input', doSearch);
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    };
 
-    // 输入框获得焦点时，如果有内容则重新显示结果
+    if (!bindInput()) {
+      customElements.whenDefined('mdui-text-field').then(() => {
+        requestAnimationFrame(bindInput);
+      });
+    }
+
+    // 后备：keyup
+    input.addEventListener('keyup', doSearch);
+
+    // 聚焦恢复
     input.addEventListener('focus', () => {
-      if (input.value.trim() && fuse) {
-        dropdown.style.display = 'block';
-      }
+      if ((input.value || '').trim() && fuse) doSearch();
     });
 
-    // 点击外部关闭下拉框
+    // 点击外部关闭
     document.addEventListener('click', e => {
       if (!input.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.style.display = 'none';
       }
     });
+
   } catch (err) {
     console.error('搜索初始化失败:', err);
   }
