@@ -4,16 +4,11 @@ date: 2025-10-24
 tags: [Cloudflare, 教程]
 cover: https://dash.cloudflare.com/favicon-196x196.png
 ---
-用我的两个域名来演示
-
+> 用我的两个域名来演示
 主力域名: xmhai.cn  辅助域名: jasmiam.top
-
 我的两个域名都托管在Cloudflare
-
 主力域名用来访问，辅助域名用来优选
-
 优选域我用的是 cloudflare.182682.xyz
-
 本站是部署在netlify上的
 
 ### 🚀 快速开始
