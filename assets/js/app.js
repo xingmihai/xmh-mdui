@@ -616,6 +616,8 @@ async function renderArchive(container) {
 async function renderAbout(container) {
   try {
     const res = await fetch('/about.md');
+    if (!res.ok) throw new Error(`HTTP ${res.status}: about.md 不存在`);
+
     const md = await res.text();
     const { frontMatter, content } = parseFrontMatter(md);
     const body = marked.parse(content);
@@ -624,7 +626,7 @@ async function renderAbout(container) {
     if (frontMatter.avatar) {
       html += `<mdui-avatar src="${escapeHtml(frontMatter.avatar)}" style="width:120px;height:120px;margin-bottom:16px;" alt="头像"></mdui-avatar>`;
     }
-    html += `<div class="mdui-typescale-headline-medium">${escapeHtml(frontMatter.name||'博主')}</div>`;
+    html += `<div class="mdui-typescale-headline-medium">${escapeHtml(frontMatter.name || '星觅海')}</div>`;
     if (frontMatter.bio) {
       html += `<div class="mdui-typescale-body-medium" style="opacity:0.7;margin-top:8px;">${escapeHtml(frontMatter.bio)}</div>`;
     }
@@ -633,7 +635,32 @@ async function renderAbout(container) {
     container.innerHTML = html;
     updateMeta('关于', '关于星觅海');
   } catch (err) {
-    container.innerHTML = '<mdui-card style="padding:24px;">关于页面加载失败</mdui-card>';
+    console.error('关于页面加载失败:', err);
+    // 使用内联 fallback 内容
+    container.innerHTML = `
+      <div style="text-align:center;margin-bottom:32px;">
+        <mdui-avatar src="https://q1.qlogo.cn/g?b=qq&nk=1498934815&s=100" style="width:120px;height:120px;margin-bottom:16px;" alt="头像"></mdui-avatar>
+        <div class="mdui-typescale-headline-medium">星觅海</div>
+        <div class="mdui-typescale-body-medium" style="opacity:0.7;margin-top:8px;">热爱技术，喜欢分享，一起慢慢进步</div>
+      </div>
+      <article class="mdui-prose">
+        <p>你好，我是 <strong>星觅海</strong>，这是我的个人博客。</p>
+        <p>我在这里分享前端开发技术、UI/UX 设计心得，以及生活随笔与思考。</p>
+        <h2>联系方式</h2>
+        <ul>
+          <li>GitHub: <a href="https://github.com" target="_blank" rel="noopener">xmhai</a></li>
+          <li>Email: <a href="mailto:mail@xmhai.cn">mail@xmhai.cn</a></li>
+        </ul>
+        <p>欢迎交流！</p>
+      </article>
+      <mdui-card style="padding:12px 16px;margin-top:16px;display:block;" variant="filled">
+        <div class="mdui-typescale-body-small" style="opacity:0.6;">
+          <mdui-icon name="info" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
+          提示：about.md 加载失败 (${escapeHtml(err.message)})，显示的是默认内容。请确保仓库根目录存在 about.md 文件。
+        </div>
+      </mdui-card>
+    `;
+    updateMeta('关于', '关于星觅海');
   }
 }
 
