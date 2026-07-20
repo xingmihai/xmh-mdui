@@ -521,7 +521,7 @@ async function renderHome(container, params = {}) {
             ${p.cover ? `<img src="${escapeHtml(p.cover)}" loading="lazy" style="width:100%;height:200px;object-fit:cover;border-radius:var(--mdui-shape-corner-medium);margin-bottom:12px;" alt="">` : ''}
             <div class="mdui-typescale-title-large" style="margin-bottom:8px;">${escapeHtml(p.title)}</div>
             <div class="mdui-typescale-body-small" style="opacity:0.7;margin-bottom:8px;">
-              ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+              ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
             </div>
             <div class="mdui-typescale-body-medium" style="opacity:0.85;">${escapeHtml(p.description||'')}</div>
           </mdui-card>
@@ -569,7 +569,7 @@ async function renderPost(container, params) {
           ${formatDate(frontMatter.date)} · 
           <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
           ${words} 字 ·
-          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
         </div>
       </div>
       <article class="mdui-prose post-content">${htmlContent}</article>
@@ -859,7 +859,7 @@ function updateMeta(title, desc) {
 
 // ==================== 标签筛选 ====================
 function filterTag(tag) {
-  location.hash = `/?tag=${encodeURIComponent(tag)}`;
+  location.hash = `/#/?tag=${encodeURIComponent(tag)}`;
 }
 
 // ==================== PWA 注册 ====================
