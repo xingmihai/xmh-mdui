@@ -744,13 +744,35 @@ async function renderFriendDetail(container, params) {
       return;
     }
 
-    let list = '<mdui-list>';
+    let list = '<div class="friend-rss-list">';
     rssData.items.slice(0, 10).forEach(item => {
-      const title = escapeHtml(item.title).replace(/"/g, '&quot;');
-      const date = formatDate(item.pubDate).replace(/"/g, '&quot;');
-      list += `<mdui-list-item rounded href="${escapeHtml(item.link)}" target="_blank" rel="noopener" headline="${title}" description="${date}"></mdui-list-item>`;
+      // 提取封面图
+      let cover = '';
+      if (item.thumbnail) {
+        cover = item.thumbnail;
+      } else if (item.enclosure && item.enclosure.type && item.enclosure.type.startsWith('image/')) {
+        cover = item.enclosure.link || item.enclosure.url;
+      } else {
+        // 从 description/content 中提取第一张图片
+        const htmlContent = item.content || item.description || '';
+        const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (imgMatch) cover = imgMatch[1];
+      }
+
+      const title = escapeHtml(item.title);
+      const date = formatDate(item.pubDate);
+
+      list += `
+        <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" class="friend-rss-item">
+          ${cover ? `<div class="friend-rss-cover"><img src="${escapeHtml(cover)}" loading="lazy" alt=""></div>` : ''}
+          <div class="friend-rss-info">
+            <div class="friend-rss-title">${title}</div>
+            <div class="friend-rss-date">${date}</div>
+          </div>
+        </a>
+      `;
     });
-    list += '</mdui-list>';
+    list += '</div>';
     rssContainer.innerHTML = list;
   } catch (err) {
     container.innerHTML = `<mdui-card style="padding:24px;color:rgb(var(--mdui-color-error));">错误：${escapeHtml(err.message)}</mdui-card>`;
