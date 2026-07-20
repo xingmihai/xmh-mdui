@@ -764,58 +764,13 @@ async function renderFriendDetail(container, params) {
       return;
     }
 
-    let list = '<div class="friend-rss-list">';
+    let list = '<mdui-list>';
     rssData.items.slice(0, 10).forEach(item => {
-      // 提取封面图（多级 fallback）
-      let cover = '';
-
-      // 1. rss2json thumbnail
-      if (item.thumbnail && String(item.thumbnail).trim()) {
-        cover = String(item.thumbnail).trim();
-      }
-      // 2. enclosure
-      else if (item.enclosure && item.enclosure.type && String(item.enclosure.type).startsWith('image/')) {
-        cover = String(item.enclosure.link || item.enclosure.url || '');
-      }
-      // 3. media:thumbnail (RSS 扩展)
-      else if (item['media:thumbnail'] && item['media:thumbnail']['@url']) {
-        cover = String(item['media:thumbnail']['@url']);
-      }
-      // 4. media:content (RSS 扩展)
-      else if (item['media:content'] && item['media:content']['@url']) {
-        cover = String(item['media:content']['@url']);
-      }
-      // 5. 从 HTML 内容中提取第一张图片
-      else {
-        const htmlContent = String(item['content:encoded'] || item.content || item.description || '');
-        const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (imgMatch && imgMatch[1]) cover = imgMatch[1];
-      }
-
-      // 处理相对路径
-      if (cover && cover.startsWith('/') && !cover.startsWith('//')) {
-        try {
-          const base = new URL(item.link).origin;
-          cover = base + cover;
-        } catch (e) {}
-      }
-
-      const title = escapeHtml(item.title || '无标题');
-      const date = formatDate(item.pubDate);
-      const hasCover = cover && cover.length > 0;
-
-      list += '<a href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener" class="friend-rss-item">';
-      list += '<div class="friend-rss-cover' + (hasCover ? '' : ' no-image') + '">';
-      if (hasCover) {
-        list += '<img src="' + escapeHtml(cover) + '" loading="lazy" alt="" onerror="this.style.display=\'none\';this.parentElement.classList.add(\'no-image\');">';
-      }
-      list += '</div>';
-      list += '<div class="friend-rss-info">';
-      list += '<div class="friend-rss-title">' + title + '</div>';
-      list += '<div class="friend-rss-date">' + date + '</div>';
-      list += '</div></a>';
+      const title = escapeHtml(item.title || '无标题').replace(/"/g, '&quot;');
+      const date = formatDate(item.pubDate).replace(/"/g, '&quot;');
+      list += '<mdui-list-item rounded href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener" headline="' + title + '" description="' + date + '"></mdui-list-item>';
     });
-    list += '</div>';
+    list += '</mdui-list>';
     rssContainer.innerHTML = list;
   } catch (err) {
     container.innerHTML = `<mdui-card style="padding:24px;color:rgb(var(--mdui-color-error));">错误：${escapeHtml(err.message)}</mdui-card>`;
