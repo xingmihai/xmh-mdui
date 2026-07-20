@@ -534,7 +534,7 @@ img[loading="lazy"] {
 }
 
 
-/* GitHub 卡片自定义语法 */
+/* ========== GitHub 卡片自定义语法 ========== */
 .gh-wrap { margin: 16px 0; }
 .gh-card {
   padding: 16px;
@@ -588,3 +588,4 @@ img[loading="lazy"] {
   min-height: auto !important;
   vertical-align: middle;
 }
+/* ========================================== */
