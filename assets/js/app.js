@@ -217,10 +217,20 @@ function generateTOC(container) {
 
 // ==================== 搜索系统（Fuse.js） ====================
 async function initSearch() {
-  // 检查 Fuse.js 是否加载成功
+  // 如果 Fuse.js 未加载（CDN 失败），动态加载
   if (typeof Fuse === 'undefined') {
-    console.error('Fuse.js 未加载，搜索功能不可用');
-    return;
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/fuse.js@7.5.0/dist/fuse.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Fuse.js CDN 加载失败'));
+        document.head.appendChild(s);
+      });
+    } catch (err) {
+      console.error('Fuse.js 加载失败，搜索功能不可用:', err);
+      return;
+    }
   }
 
   try {
@@ -278,7 +288,7 @@ async function initSearch() {
       dropdown.style.display = 'block';
     };
 
-    // 核心修复：在 shadowRoot 内部 input 上监听（最可靠）
+    // 核心修复：在 shadowRoot 内部 input 上监听 input 事件
     const bindInput = () => {
       try {
         const nativeInput = input.shadowRoot && input.shadowRoot.querySelector('input');
