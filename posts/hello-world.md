@@ -34,4 +34,7 @@ console.log(greet('World'));
 ## 视频示例
 <video src="/posts/videos/demo.mp4" controls></video>
 
+## 图片示例
+![IMG_20260715_230804.jpg](/posts/images/IMG_20260715_230804.jpg)
+
 希望你喜欢这个博客！
