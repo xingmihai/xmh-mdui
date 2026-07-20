@@ -40,13 +40,7 @@ const debounce = (fn, wait) => {
 // ==================== 主题系统 ====================
 function initTheme() {
   const btn = $('theme-btn');
-  const label = $('theme-label');
-
-  const themeMap = {
-    auto:  { icon: 'brightness_auto', text: '跟随系统' },
-    light: { icon: 'brightness_7',    text: '亮色模式' },
-    dark:  { icon: 'brightness_2',    text: '暗色模式' },
-  };
+  const icon = btn.querySelector('mdui-icon');
 
   const apply = theme => {
     const html = document.documentElement;
@@ -55,9 +49,9 @@ function initTheme() {
     currentTheme = theme;
     localStorage.setItem('theme', theme);
 
-    const cfg = themeMap[theme];
-    btn.icon = cfg.icon;
-    if (label) label.textContent = cfg.text;
+    icon.name = theme === 'light' ? 'brightness_7'
+              : theme === 'dark'  ? 'brightness_2'
+              : 'brightness_auto';
 
     syncWalineTheme();
   };

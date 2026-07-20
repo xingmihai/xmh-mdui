@@ -138,11 +138,6 @@ body {
   padding: 8px 0;
 }
 
-.theme-wrap mdui-button {
-  width: 100%;
-  justify-content: center;
-}
-
 /* 主内容区 */
 .main-content {
   flex: 1;
