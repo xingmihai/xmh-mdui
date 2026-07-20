@@ -35,3 +35,12 @@ MDUI 使用 CSS 自定义属性实现设计令牌，可以全局修改样式：
   --mdui-shape-corner-large: 1.5rem;
 }
 ```
+
+github 仓库卡片
+```javascript
+::github{repo="CuteLeaf/Firefly"}
+
+在.mdx文章中也可
+<GithubCard repo="CuteLeaf/Firefly" />
+```
+::github{repo="CuteLeaf/Firefly"}
