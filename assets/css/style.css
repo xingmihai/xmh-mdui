@@ -554,6 +554,7 @@ img[loading="lazy"] {
   height: 48px;
   border-radius: 50%;
   flex-shrink: 0;
+  object-fit: cover;  /* 加这行 */
 }
 .gh-info {
   flex: 1;
