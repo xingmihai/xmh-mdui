@@ -456,11 +456,14 @@ img[loading="lazy"] {
 
 .friend-rss-cover {
   flex-shrink: 0;
-  width: 80px;
-  height: 60px;
+  width: 88px;
+  height: 66px;
   border-radius: var(--mdui-shape-corner-small);
   overflow: hidden;
   background: rgb(var(--mdui-color-surface-variant));
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .friend-rss-cover img {
@@ -468,6 +471,19 @@ img[loading="lazy"] {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.friend-rss-cover.no-image {
+  background: rgb(var(--mdui-color-primary-container));
+}
+
+.friend-rss-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgb(var(--mdui-color-on-surface-variant));
 }
 
 .friend-rss-info {
