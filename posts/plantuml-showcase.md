@@ -362,39 +362,26 @@ Browser is 空闲
 
 ```plantuml
 @startuml
-!define RECTANGLE class
-
-RECTANGLE 路由器 as Router {
-    IP: 192.168.1.1
+nwdiag {
+    network 外网 {
+        互联网
+    }
+    network 内网 {
+        address = "192.168.1.x"
+        路由器 [address = "192.168.1.1"]
+        交换机 [address = "192.168.1.2"]
+        服务器1 [address = "192.168.1.10", description = "Web 服务器"]
+        服务器2 [address = "192.168.1.11", description = "数据库服务器"]
+        笔记本 [address = "192.168.1.100"]
+        手机 [address = "192.168.1.101"]
+    }
+    互联网 -- 路由器 : 光纤接入
+    路由器 -- 交换机 : 千兆网线
+    交换机 -- 服务器1 : 网线
+    交换机 -- 服务器2 : 网线
+    交换机 -- 笔记本 : WiFi
+    交换机 -- 手机 : WiFi
 }
-
-RECTANGLE 交换机 as Switch {
-    Ports: 24
-}
-
-RECTANGLE 服务器1 as Server1 {
-    IP: 192.168.1.10
-    Role: Web
-}
-
-RECTANGLE 服务器2 as Server2 {
-    IP: 192.168.1.11
-    Role: DB
-}
-
-RECTANGLE 笔记本 as Laptop {
-    IP: 192.168.1.100
-}
-
-RECTANGLE 手机 as Phone {
-    IP: 192.168.1.101
-}
-
-Router --> Switch : 千兆光纤
-Switch --> Server1 : 网线
-Switch --> Server2 : 网线
-Switch --> Laptop : WiFi
-Switch --> Phone : WiFi
 @enduml
 ```
 
