@@ -7,6 +7,9 @@ cover: https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200
 ---
 
 # xmh-mdui 博客使用教程
+>[!TIP]
+>
+>虽然目前还有很多不足的地方，但是后续会慢慢优化
 
 > xmh-mdui 是一套基于 **MDUI v2** + **原生 JavaScript** 的纯静态个人博客系统。无需后端，无需数据库，只需 Markdown 即可开始写作。
 
