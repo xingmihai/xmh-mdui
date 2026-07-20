@@ -72,6 +72,33 @@ function mdxToPlainText(mdx) {
     .trim();
 }
 
+
+function generateGithubCardHtml(repo) {
+  const [owner, name] = repo.split('/');
+  if (!owner || !name) return `::github{repo="${repo}"}`;
+  const safeRepo = escapeHtml(repo);
+  return `<mdui-card class="github-card" data-repo="${safeRepo}" variant="filled" style="padding:16px;cursor:pointer;display:block;margin:16px 0;" onclick="window.open('https://github.com/${safeRepo}','_blank')">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:rgb(var(--mdui-color-surface-variant));">
+        <img class="github-avatar" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;" onload="this.style.display='block'">
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="github-name" style="font-weight:500;font-size:16px;color:rgb(var(--mdui-color-on-surface));">${safeRepo}</span>
+          <mdui-icon name="open_in_new" style="font-size:16px;opacity:0.5;flex-shrink:0;"></mdui-icon>
+        </div>
+        <div class="github-desc" style="font-size:14px;color:rgb(var(--mdui-color-on-surface-variant));line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">正在获取仓库信息...</div>
+        <div class="github-meta" style="margin-top:12px;display:flex;gap:16px;font-size:13px;color:rgb(var(--mdui-color-on-surface-variant));flex-wrap:wrap;">
+          <span>⭐ <span class="github-stars">-</span></span>
+          <span>🍴 <span class="github-forks">-</span></span>
+          <span class="github-lang" style="display:none;">● <span>-</span></span>
+          <span class="github-license" style="display:none;">📄 <span>-</span></span>
+        </div>
+      </div>
+    </div>
+  </mdui-card>`;
+}
+
 // 将 Markdown 表格转换为 HTML 表格（GFM 替代方案）
 function markdownTableToHtml(text) {
   return text.replace(
@@ -132,6 +159,14 @@ const MDX_COMPONENTS = {
   Badge: ({ children, color = 'primary' }) =>
     React.createElement('span', { className: `mdx-badge mdx-badge-${color}` }, children),
   Columns: ({ children }) => React.createElement('div', { className: 'mdx-columns' }, children),
+  GithubCard: ({ repo }) => {
+    return React.createElement('div', {
+      dangerouslySetInnerHTML: {
+        __html: generateGithubCardHtml(String(repo || ''))
+      }
+    });
+  },
+
   Column: ({ children }) => React.createElement('div', { className: 'mdx-column' }, children),
 };
 
@@ -153,9 +188,21 @@ function compileMDXToHtml(mdxBody) {
   });
 
   const MDXContent = result.default;
-  return renderToStaticMarkup(
+  let html = renderToStaticMarkup(
     React.createElement(MDXContent, { components: MDX_COMPONENTS })
   );
+
+  // 后处理：GitHub 仓库卡片
+  html = html.replace(
+    /<p>\s*::github\{repo="([^"]+)"\}\s*<\/p>/g,
+    (match, repo) => generateGithubCardHtml(repo)
+  );
+  html = html.replace(
+    /::github\{repo="([^"]+)"\}/g,
+    (match, repo) => generateGithubCardHtml(repo)
+  );
+
+  return html;
 }
 
 // ========== 构建主函数 ==========

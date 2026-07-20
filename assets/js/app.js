@@ -37,6 +37,94 @@ const debounce = (fn, wait) => {
   };
 };
 
+
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return String(num);
+}
+
+function generateGithubCardHtml(repo) {
+  const [owner, name] = repo.split('/');
+  if (!owner || !name) return `::github{repo="${repo}"}`;
+  const safeRepo = escapeHtml(repo);
+  return `<mdui-card class="github-card" data-repo="${safeRepo}" variant="filled" style="padding:16px;cursor:pointer;display:block;margin:16px 0;" onclick="window.open('https://github.com/${safeRepo}','_blank')">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:rgb(var(--mdui-color-surface-variant));">
+        <img class="github-avatar" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;" onload="this.style.display='block'">
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="github-name" style="font-weight:500;font-size:16px;color:rgb(var(--mdui-color-on-surface));">${safeRepo}</span>
+          <mdui-icon name="open_in_new" style="font-size:16px;opacity:0.5;flex-shrink:0;"></mdui-icon>
+        </div>
+        <div class="github-desc" style="font-size:14px;color:rgb(var(--mdui-color-on-surface-variant));line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">正在获取仓库信息...</div>
+        <div class="github-meta" style="margin-top:12px;display:flex;gap:16px;font-size:13px;color:rgb(var(--mdui-color-on-surface-variant));flex-wrap:wrap;">
+          <span>⭐ <span class="github-stars">-</span></span>
+          <span>🍴 <span class="github-forks">-</span></span>
+          <span class="github-lang" style="display:none;">● <span>-</span></span>
+          <span class="github-license" style="display:none;">📄 <span>-</span></span>
+        </div>
+      </div>
+    </div>
+  </mdui-card>`;
+}
+
+async function loadGithubCardData(container) {
+  const cards = container.querySelectorAll('.github-card[data-repo]');
+  if (!cards.length) return;
+
+  for (const card of cards) {
+    const repo = card.dataset.repo;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}`, {
+        headers: { Accept: 'application/vnd.github.v3+json' }
+      });
+      if (!res.ok) {
+        if (res.status === 404) {
+          const descEl = card.querySelector('.github-desc');
+          if (descEl) descEl.textContent = '仓库不存在或无法访问';
+        }
+        continue;
+      }
+      const data = await res.json();
+
+      const avatarImg = card.querySelector('.github-avatar');
+      if (avatarImg && data.owner?.avatar_url) {
+        avatarImg.src = data.owner.avatar_url;
+      }
+
+      const nameEl = card.querySelector('.github-name');
+      if (nameEl) nameEl.textContent = data.full_name || repo;
+
+      const descEl = card.querySelector('.github-desc');
+      if (descEl) descEl.textContent = data.description || '暂无描述';
+
+      const starsEl = card.querySelector('.github-stars');
+      if (starsEl) starsEl.textContent = formatNumber(data.stargazers_count || 0);
+
+      const forksEl = card.querySelector('.github-forks');
+      if (forksEl) forksEl.textContent = formatNumber(data.forks_count || 0);
+
+      const langEl = card.querySelector('.github-lang');
+      if (langEl && data.language) {
+        langEl.style.display = '';
+        langEl.querySelector('span').textContent = data.language;
+      }
+
+      const licenseEl = card.querySelector('.github-license');
+      if (licenseEl && data.license?.spdx_id) {
+        licenseEl.style.display = '';
+        licenseEl.querySelector('span').textContent = data.license.spdx_id;
+      }
+    } catch (err) {
+      console.error(`GitHub 卡片加载失败: ${repo}`, err);
+      const descEl = card.querySelector('.github-desc');
+      if (descEl) descEl.textContent = '仓库信息加载失败';
+    }
+  }
+}
+
 // ==================== Mermaid 支持 ====================
 function getMermaidTheme() {
   const html = document.documentElement;
@@ -606,76 +694,6 @@ async function renderHome(container, params = {}) {
 
 async function renderPost(container, params) {
   const { slug } = params;
-
-  // 先获取文章元数据，判断是否为 MDX
-  let postMeta = null;
-  try {
-    await loadPosts();
-    postMeta = postsCache.find(p => p.slug === slug);
-  } catch (e) {}
-
-  // ========== MDX 文章渲染 ==========
-  if (postMeta && postMeta.format === 'mdx') {
-    try {
-      const res = await fetch(`/posts-html/${slug}.html`);
-      if (!res.ok) throw new Error('404');
-      const htmlBody = await res.text();
-
-      let html = '';
-      if (postMeta.cover) {
-        html += `<img src="${escapeHtml(postMeta.cover)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--mdui-shape-corner-large);margin-bottom:24px;" alt="文章封面" data-zoomable>`;
-      }
-      html += `
-        <div style="margin-bottom:24px;">
-          <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(postMeta.title)}</h1>
-          <div class="mdui-typescale-body-small" style="opacity:0.7;">
-            <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
-            ${formatDate(postMeta.date)} ·
-            ${(postMeta.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
-          </div>
-        </div>
-        <article class="mdui-prose post-content">${htmlBody}</article>
-
-        <mdui-divider style="margin:32px 0;"></mdui-divider>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
-          <div class="mdui-typescale-body-small" style="opacity:0.7;">
-            本文链接：<a href="${CONFIG.siteUrl}/#/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/#/post/${slug}',2000);">${CONFIG.siteUrl}/#/post/${slug}</a>
-          </div>
-        </div>
-
-        <div style="margin-top:24px;"><div id="waline"></div></div>
-      `;
-      container.innerHTML = html;
-
-      // 代码高亮
-      container.querySelectorAll('pre code').forEach(b => {
-        if (window.hljs) hljs.highlightElement(b);
-      });
-
-      // 代码复制按钮
-      initCodeCopy(container);
-
-      // 图片灯箱
-      container.querySelectorAll('img').forEach(img => {
-        if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
-        if (!img.hasAttribute('data-zoomable')) img.setAttribute('data-zoomable', '');
-      });
-      initImageZoom(container);
-
-      // 生成目录
-      generateTOC(container);
-
-      initWaline(slug);
-      updateMeta(postMeta.title, postMeta.description||'');
-      return;
-    } catch (err) {
-      render404(container);
-      return;
-    }
-  }
-
-  // ========== 原有 Markdown 文章渲染 ==========
   try {
     const res = await fetch(`${CONFIG.postsDir}${slug}.md`);
     if (!res.ok) throw new Error('404');
@@ -696,6 +714,15 @@ async function renderPost(container, params) {
         return `<div class="mermaid">${decoded}</div>`;
       }
     );
+    // 后处理：GitHub 仓库卡片
+    htmlContent = htmlContent.replace(
+      /<p>\s*::github\{repo="([^"]+)"\}\s*<\/p>/g,
+      (match, repo) => generateGithubCardHtml(repo)
+    );
+    htmlContent = htmlContent.replace(
+      /::github\{repo="([^"]+)"\}/g,
+      (match, repo) => generateGithubCardHtml(repo)
+    );
     const words = countWords(content);
 
     let html = '';
@@ -707,7 +734,7 @@ async function renderPost(container, params) {
         <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(frontMatter.title||slug)}</h1>
         <div class="mdui-typescale-body-small" style="opacity:0.7;">
           <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
-          ${formatDate(frontMatter.date)} ·
+          ${formatDate(frontMatter.date)} · 
           <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
           ${words} 字 ·
           ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
@@ -751,13 +778,13 @@ async function renderPost(container, params) {
     // 渲染 PlantUML 图表
     renderPlantUML(container);
 
+    loadGithubCardData(container);
     initWaline(slug);
     updateMeta(frontMatter.title||slug, frontMatter.description||'');
   } catch (err) {
     render404(container);
   }
 }
-
 
 async function renderArchive(container) {
   const posts = await loadPosts();
