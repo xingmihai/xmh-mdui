@@ -549,7 +549,7 @@ img[loading="lazy"] {
   margin-bottom: 12px;
   pointer-events: none;
 }
-.gh-avatar {
+.post-content .gh-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
