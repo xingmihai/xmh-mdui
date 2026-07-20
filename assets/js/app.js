@@ -471,8 +471,16 @@ function countWords(md) {
 }
 
 // ==================== Marked 配置（安全增强） ====================
-function initMarked() {
+async function initMarked() {
   if (typeof marked === 'undefined') return;
+
+  // 加载脚注插件
+  try {
+    const { footnote } = await import('https://esm.sh/marked-footnote@1.2.2');
+    marked.use(footnote());
+  } catch (e) {
+    console.warn('脚注插件加载失败:', e);
+  }
 
   const renderer = new marked.Renderer();
 
@@ -949,14 +957,14 @@ function initPWA() {
 }
 
 // ==================== 初始化入口 ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   $('year').textContent = new Date().getFullYear();
   initTheme();
   initSidebar();
   initSearch();
   initTOC();
   initReadingProgress();
-  initMarked();
+  await initMarked();
   initMermaid();
   updatePageviews();
   handleRoute();
