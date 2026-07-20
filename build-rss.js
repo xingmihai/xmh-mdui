@@ -80,8 +80,8 @@ function build() {
   const items = files.map(p => `
     <item>
       <title>${escapeXml(p.title)}</title>
-      <link>${SITE_URL}/post/${p.slug}</link>
-      <guid>${SITE_URL}/post/${p.slug}</guid>
+      <link>${SITE_URL}/#/post/${p.slug}</link>
+      <guid>${SITE_URL}/#/post/${p.slug}</guid>
       <pubDate>${new Date(p.date).toUTCString()}</pubDate>
       <description>${escapeXml(p.description)}</description>
       ${p.tags.map(t => `<category>${escapeXml(t)}</category>`).join('\n      ')}

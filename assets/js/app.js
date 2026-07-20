@@ -98,7 +98,7 @@ function initReadingProgress() {
 
   // 仅在文章页面显示进度条
   const checkPage = () => {
-    const isPost = location.hash.startsWith('post/');
+    const isPost = location.hash.startsWith('#/post/');
     progressContainer.style.display = isPost ? 'block' : 'none';
   };
   window.addEventListener('hashchange', checkPage);
@@ -264,7 +264,7 @@ async function initSearch() {
             <div class="search-result-desc">${escapeHtml(r.item.description || formatDate(r.item.date))}</div>
           `;
           item.addEventListener('click', () => {
-            location.hash = `post/${r.item.slug}`;
+            location.hash = `#/post/${r.item.slug}`;
             dropdown.style.display = 'none';
             input.value = '';
           });
@@ -508,7 +508,7 @@ async function renderHome(container, params = {}) {
     html += '</div>';
 
     if (currentTagFilter) {
-      html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash=''">清除筛选</mdui-chip>`;
+      html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash='#/'">清除筛选</mdui-chip>`;
     }
 
     if (!filtered.length) {
@@ -517,11 +517,11 @@ async function renderHome(container, params = {}) {
       html += '<div style="display:grid;gap:16px;">';
       filtered.forEach(p => {
         html += `
-          <mdui-card class="post-card" style="padding:16px;cursor:pointer;" onclick="location.hash='post/${p.slug}'">
+          <mdui-card class="post-card" style="padding:16px;cursor:pointer;" onclick="location.hash='#/post/${p.slug}'">
             ${p.cover ? `<img src="${escapeHtml(p.cover)}" loading="lazy" style="width:100%;height:200px;object-fit:cover;border-radius:var(--mdui-shape-corner-medium);margin-bottom:12px;" alt="">` : ''}
             <div class="mdui-typescale-title-large" style="margin-bottom:8px;">${escapeHtml(p.title)}</div>
             <div class="mdui-typescale-body-small" style="opacity:0.7;margin-bottom:8px;">
-              ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+              ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
             </div>
             <div class="mdui-typescale-body-medium" style="opacity:0.85;">${escapeHtml(p.description||'')}</div>
           </mdui-card>
@@ -569,7 +569,7 @@ async function renderPost(container, params) {
           ${formatDate(frontMatter.date)} · 
           <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
           ${words} 字 ·
-          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
         </div>
       </div>
       <article class="mdui-prose post-content">${htmlContent}</article>
@@ -578,7 +578,7 @@ async function renderPost(container, params) {
 
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
         <div class="mdui-typescale-body-small" style="opacity:0.7;">
-          本文链接：<a href="${CONFIG.siteUrl}/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/post/${slug}',2000);">${CONFIG.siteUrl}/post/${slug}</a>
+          本文链接：<a href="${CONFIG.siteUrl}/#/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/#/post/${slug}',2000);">${CONFIG.siteUrl}/#/post/${slug}</a>
         </div>
       </div>
 
@@ -655,7 +655,7 @@ async function renderArchive(container) {
     ps.forEach(p => {
       const title = escapeHtml(p.title).replace(/"/g, '&quot;');
       const desc = `${formatDate(p.date)}${(p.tags||[]).length ? ' · ' + (p.tags||[]).join(', ') : ''}`.replace(/"/g, '&quot;');
-      html += `<mdui-list-item rounded href="post/${p.slug}" headline="${title}" description="${desc}"></mdui-list-item>`;
+      html += `<mdui-list-item rounded href="#/post/${p.slug}" headline="${title}" description="${desc}"></mdui-list-item>`;
     });
     html += '</mdui-list></div>';
   });
@@ -721,7 +721,7 @@ async function renderFriends(container) {
   html += '<div class="friends-grid">';
   friends.forEach(f => {
     html += `
-      <mdui-card class="friend-card" style="padding:16px;cursor:pointer;" onclick="location.hash='friend/${encodeURIComponent(f.name)}'">
+      <mdui-card class="friend-card" style="padding:16px;cursor:pointer;" onclick="location.hash='#/friend/${encodeURIComponent(f.name)}'">
         <div style="display:flex;align-items:center;gap:12px;">
           <mdui-avatar src="${escapeHtml(f.avatar)}" style="width:48px;height:48px;" alt="${escapeHtml(f.name)}"></mdui-avatar>
           <div style="flex:1;min-width:0;">
@@ -813,7 +813,7 @@ function render404(container) {
       <mdui-icon name="error_outline" class="not-found-icon"></mdui-icon>
       <div class="mdui-typescale-headline-medium" style="margin-top:16px;">404</div>
       <div class="mdui-typescale-body-large" style="margin-top:8px;opacity:0.7;">页面不存在</div>
-      <mdui-button style="margin-top:24px;" href="">返回首页</mdui-button>
+      <mdui-button style="margin-top:24px;" href="#/">返回首页</mdui-button>
     </div>
   `;
   updateMeta('404', '页面不存在');
@@ -859,7 +859,7 @@ function updateMeta(title, desc) {
 
 // ==================== 标签筛选 ====================
 function filterTag(tag) {
-  location.hash = `/?tag=${encodeURIComponent(tag)}`;
+  location.hash = `/#/?tag=${encodeURIComponent(tag)}`;
 }
 
 // ==================== PWA 注册 ====================
