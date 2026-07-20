@@ -11,23 +11,23 @@ description: 展示如何在 MDUI 博客中嵌入带有 GitHub 仓库信息的�
 
 ## 卡片效果
 
-<mdui-card class="friend-card" style="max-width: 480px; padding: 20px; margin: 16px 0; cursor: pointer;" onclick="window.open('https://github.com/xingmihai/xmh-mdui', '_blank')">
-  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
-    <mdui-avatar src="https://github.com/xingmihai.png" style="width: 56px; height: 56px;" alt="xingmihai"></mdui-avatar>
+<mdui-card class="friend-card" style="padding: 16px; margin: 16px 0; cursor: pointer;" onclick="window.open('https://github.com/xingmihai/xmh-mdui', '_blank')">
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+    <mdui-avatar src="https://github.com/xingmihai.png" style="width: 48px; height: 48px;" alt="xingmihai"></mdui-avatar>
     <div style="flex: 1; min-width: 0;">
-      <div class="mdui-typescale-title-large" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <div class="mdui-typescale-title-medium" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
         xingmihai / xmh-mdui
       </div>
-      <div class="mdui-typescale-body-small" style="opacity: 0.6; margin-top: 4px;">
+      <div class="mdui-typescale-body-small" style="opacity: 0.6; margin-top: 2px;">
         MDUI v2 个人博客主题
       </div>
     </div>
-    <mdui-icon name="open_in_new" style="opacity: 0.4;"></mdui-icon>
+    <mdui-icon name="open_in_new" style="opacity: 0.4; font-size: 20px;"></mdui-icon>
   </div>
-  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-    <img src="https://img.shields.io/github/stars/xingmihai/xmh-mdui?style=social" alt="Stars" style="height: 20px;">
-    <img src="https://img.shields.io/github/forks/xingmihai/xmh-mdui?style=social" alt="Forks" style="height: 20px;">
-    <img src="https://img.shields.io/github/license/xingmihai/xmh-mdui" alt="License" style="height: 20px;">
+  <div style="display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto;">
+    <img src="https://img.shields.io/github/stars/xingmihai/xmh-mdui?style=flat&logo=github&label=Stars" alt="Stars" style="height: 18px; min-height: auto;">
+    <img src="https://img.shields.io/github/forks/xingmihai/xmh-mdui?style=flat&logo=github&label=Forks" alt="Forks" style="height: 18px; min-height: auto;">
+    <img src="https://img.shields.io/github/license/xingmihai/xmh-mdui?style=flat" alt="License" style="height: 18px; min-height: auto;">
   </div>
 </mdui-card>
 
