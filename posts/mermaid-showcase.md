@@ -339,20 +339,21 @@ quadrantChart
 
 ## 13. 桑基图 (Sankey Diagram)
 
-流量/能量流向可视化。
+流量/能量流向可视化。注意桑基图节点名避免使用特殊字符。
 
 ```mermaid
 sankey-beta
-    %% source,target,value
-    首页,搜索结果,40
-    首页,文章详情,30
-    首页,关于页面,10
-    搜索结果,文章详情,25
-    搜索结果,标签页,15
-    文章详情,评论互动,20
-    文章详情,分享转发,10
-    标签页,文章详情,12
-    关于页面,友链页面,8
+    Direct,Home,500
+    Search,Home,800
+    Social,Home,400
+    Ads,Home,300
+    Home,Article,1200
+    Home,About,200
+    Home,Tags,600
+    Article,Comment,400
+    Article,Share,200
+    Tags,Article,500
+    About,Friends,150
 ```
 
 ---
@@ -363,9 +364,9 @@ sankey-beta
 
 ```mermaid
 xychart-beta
-    title "月度访问量趋势"
-    x-axis [1月, 2月, 3月, 4月, 5月, 6月]
-    y-axis "访问量 (千)" 0 --> 50
+    title "Monthly Visits"
+    x-axis [Jan, Feb, Mar, Apr, May, Jun]
+    y-axis "Visits (k)" 0 --> 50
     bar [12, 18, 25, 32, 28, 45]
     line [12, 18, 25, 32, 28, 45]
 ```
@@ -398,16 +399,16 @@ block-beta
 
 ```mermaid
 kanban
-    Todo
-        [ ] 设计首页 Banner
-        [ ] 集成评论系统
-    In Progress
-        [x] 添加 Mermaid 支持
-        [x] 暗色模式适配
-    Done
-        [x] 博客基础框架搭建
-        [x] RSS 订阅功能
-        [x] 搜索功能
+    [Todo]
+        [Design home page]
+        [Create login API]
+    [In Progress]
+        [Add Mermaid support]
+        [Dark mode]
+    [Done]
+        [Setup blog]
+        [RSS feed]
+        [Search]
 ```
 
 ---
@@ -418,26 +419,26 @@ kanban
 
 ```mermaid
 requirementDiagram
-    requirement 性能需求 {
+    requirement Performance {
         id: 1
-        text: 页面首屏加载时间不超过 2 秒
+        text: Page load under 2s
         risk: high
         verifymethod: test
     }
-    requirement 安全需求 {
+    requirement Security {
         id: 2
-        text: 所有 API 请求必须使用 HTTPS
+        text: HTTPS only
         risk: medium
         verifymethod: inspection
     }
-    element 前端应用 {
+    element Frontend {
         type: module
     }
-    element 后端服务 {
+    element Backend {
         type: module
     }
-    性能需求 - verifies -> 前端应用
-    安全需求 - verifies -> 后端服务
+    Performance - verifies -> Frontend
+    Security - verifies -> Backend
 ```
 
 ---
@@ -448,8 +449,8 @@ requirementDiagram
 
 ```mermaid
 radar
-    title 技术栈能力雷达
-    axis 性能, 可维护性, 社区活跃度, 学习曲线, 生态丰富度
+    title Tech Stack Radar
+    axis Performance, Maintainability, Community, Learning, Ecosystem
     scale 0 --> 10
     React: [9, 8, 10, 6, 10]
     Vue: [8, 9, 9, 9, 9]
@@ -477,39 +478,36 @@ C4Context
     System_Ext(cdn, "CDN", "Cloudflare Pages")
     System_Ext(analytics, "统计服务", "访问数据分析")
 
-    Rel(reader, frontend, "阅读文章", "HTTPS")
-    Rel(admin, frontend, "管理内容", "HTTPS")
-    Rel(frontend, api, "提交评论", "HTTPS")
-    Rel(frontend, cdn, "加载静态资源", "HTTPS")
-    Rel(frontend, analytics, "上报访问数据", "HTTPS")
+    Rel(reader, frontend, "Uses", "HTTPS")
+    Rel(admin, frontend, "Manages", "HTTPS")
+    Rel(frontend, api, "Comments", "HTTPS")
+    Rel(frontend, cdn, "Assets", "HTTPS")
+    Rel(frontend, analytics, "Tracking", "HTTPS")
 ```
 
 ---
 
 ## 20. 架构图 (Architecture)
 
-Beta 版架构图。
+Beta 版架构图。标签仅支持字母数字和空格。
 
 ```mermaid
 architecture-beta
-    group api[API 层]
-        service gateway[网关] in api
-        service auth[认证] in api
-    group service[服务层]
-        service user[用户服务] in service
-        service post[文章服务] in service
-        service comment[评论服务] in service
-    group data[数据层]
-        service db[(数据库)] in data
-        service cache[(缓存)] in data
+    group api(cloud)[API Layer]
+        service gateway(internet)[Gateway] in api
+        service auth(server)[Auth Service] in api
+        service user_svc(server)[User Service] in api
+        service post_svc(server)[Post Service] in api
+    group data(database)[Data Layer]
+        service db(database)[Database] in data
+        service cache(disk)[Cache] in data
 
-    gateway:B --> T:auth
-    auth:B --> T:user
-    user:B --> T:db
-    post:B --> T:db
-    comment:B --> T:db
-    user:B --> T:cache
-    post:B --> T:cache
+    gateway:B -- T:auth
+    auth:B -- T:user_svc
+    gateway:B -- T:post_svc
+    user_svc:B -- T:db
+    post_svc:B -- T:db
+    user_svc:B -- T:cache
 ```
 
 ---
@@ -520,7 +518,7 @@ architecture-beta
 
 ```mermaid
 packet-beta
-    title TCP 头部结构
+    title TCP Header Structure
     0-15: "Source Port"
     16-31: "Destination Port"
     32-63: "Sequence Number"
@@ -536,7 +534,7 @@ packet-beta
     112-127: "Window Size"
     128-143: "Checksum"
     144-159: "Urgent Pointer"
-    160-191: "Options (optional)"
+    160-191: "Options"
 ```
 
 ---
@@ -553,4 +551,6 @@ graph TD
 ```
 ````
 
-> 💡 **提示**：本博客会自动检测 ` ```mermaid ` 代码块，将其渲染为交互式 SVG 图表，并跟随系统/博客主题自动切换亮暗配色。
+> **提示**：本博客会自动检测 ` ```mermaid ` 代码块，将其渲染为交互式 SVG 图表，并跟随系统/博客主题自动切换亮暗配色。
+
+> **注意**：部分图表类型（如桑基图、架构图）对特殊字符敏感，建议节点名使用简单字母数字和空格。
