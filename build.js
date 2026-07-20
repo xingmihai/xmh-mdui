@@ -85,25 +85,25 @@ const MDX_COMPONENTS = {
 };
 
 function compileMDXToHtml(mdxBody) {
-  // compileSync 返回 VFile，用 .toString() 获取代码字符串
   const vfile = compileSync(mdxBody, {
     outputFormat: 'function-body',
     development: false,
   });
   const code = String(vfile);
 
-  // 编译后的代码是一个接收参数对象并返回 { default: Component } 的函数
   const run = new Function('_args', code);
   const result = run({
     React,
     jsx,
     jsxs,
     Fragment,
-    ...MDX_COMPONENTS,
   });
 
-  const Content = result.default;
-  return renderToStaticMarkup(React.createElement(Content));
+  const MDXContent = result.default;
+  // 通过 components prop 传入自定义组件
+  return renderToStaticMarkup(
+    React.createElement(MDXContent, { components: MDX_COMPONENTS })
+  );
 }
 
 // ========== 构建主函数 ==========
@@ -130,7 +130,6 @@ function build() {
         } catch (e) {
           console.error(`❌ MDX 编译失败 ${f}:`, e.message);
           console.error(e.stack);
-          // 回退：当作普通 markdown 处理
         }
       }
 
