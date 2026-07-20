@@ -1,7 +1,7 @@
 // ==================== 配置 ====================
 const CONFIG = {
-  siteName: 'My Blog',
-  siteUrl: 'https://your-domain.com',
+  siteName: '星觅海的博客',
+  siteUrl: 'https://mdui.xmhai.cn',
   walineServer: 'https://vercel-waline.xmhai.cn',
   postsDir: '/posts/',
 };
@@ -13,6 +13,9 @@ let isMobile = window.innerWidth < 840;
 let sidebarCollapsed = false;
 let sidebarOpenMobile = false;
 let currentTheme = localStorage.getItem('theme') || 'auto';
+let currentTagFilter = null;
+let tocObserver = null;
+let zoomInstance = null;
 
 // ==================== 工具函数 ====================
 const $ = id => document.getElementById(id);
@@ -25,6 +28,13 @@ const escapeHtml = str => {
 const formatDate = str => {
   const d = new Date(str);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const debounce = (fn, wait) => {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
 };
 
 // ==================== 主题系统 ====================
@@ -67,25 +77,29 @@ function syncWalineTheme() {
   waline.setAttribute('data-theme', isDark ? 'dark' : 'light');
 }
 
-// ==================== 缩放拦截 ====================
-function initZoomBlock() {
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && ['+','-','=','0'].includes(e.key)) {
-      e.preventDefault();
-    }
-  });
-  document.addEventListener('wheel', e => {
-    if (e.ctrlKey || e.metaKey) e.preventDefault();
-  }, { passive: false });
-  document.addEventListener('touchmove', e => {
-    if (e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
-  let lastTouch = 0;
-  document.addEventListener('touchend', e => {
-    const now = Date.now();
-    if (now - lastTouch <= 300) e.preventDefault();
-    lastTouch = now;
-  }, { passive: false });
+// ==================== 阅读进度条 ====================
+function initReadingProgress() {
+  const bar = $('reading-progress-bar');
+  const progressContainer = $('reading-progress');
+  if (!bar) return;
+
+  const update = () => {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    bar.style.width = `${Math.min(pct, 100)}%`;
+  };
+
+  window.addEventListener('scroll', debounce(update, 16), { passive: true });
+  update();
+
+  // 仅在文章页面显示进度条
+  const checkPage = () => {
+    const isPost = location.hash.startsWith('#/post/');
+    progressContainer.style.display = isPost ? 'block' : 'none';
+  };
+  window.addEventListener('hashchange', checkPage);
+  checkPage();
 }
 
 // ==================== 侧边栏控制 ====================
@@ -104,7 +118,7 @@ function initSidebar() {
     }
   };
   checkMobile();
-  window.addEventListener('resize', checkMobile);
+  window.addEventListener('resize', debounce(checkMobile, 100));
 
   btn.addEventListener('click', () => {
     if (isMobile) {
@@ -123,6 +137,82 @@ function initSidebar() {
     sidebar.classList.remove('mobile-open');
     overlay.classList.remove('active');
   });
+}
+
+// ==================== 文章目录 (TOC) ====================
+function initTOC() {
+  const tocSidebar = $('toc-sidebar');
+  const tocToggle = $('toc-toggle-btn');
+  const tocClose = $('toc-close-btn');
+  if (!tocSidebar || !tocToggle) return;
+
+  tocToggle.addEventListener('click', () => {
+    tocSidebar.classList.toggle('open');
+  });
+  tocClose.addEventListener('click', () => {
+    tocSidebar.classList.remove('open');
+  });
+
+  // 点击外部关闭
+  document.addEventListener('click', e => {
+    if (tocSidebar.classList.contains('open') &&
+        !tocSidebar.contains(e.target) &&
+        !tocToggle.contains(e.target)) {
+      tocSidebar.classList.remove('open');
+    }
+  });
+}
+
+function generateTOC(container) {
+  const tocContent = $('toc-content');
+  const tocToggle = $('toc-toggle-btn');
+  const tocSidebar = $('toc-sidebar');
+  if (!tocContent || !tocToggle) return;
+
+  const headings = container.querySelectorAll('h1, h2, h3, h4');
+  if (headings.length < 2) {
+    tocToggle.style.display = 'none';
+    tocSidebar.classList.remove('open');
+    return;
+  }
+
+  tocToggle.style.display = '';
+  let html = '<mdui-list>';
+  headings.forEach((h, i) => {
+    const id = `heading-${i}`;
+    h.id = id;
+    const level = parseInt(h.tagName[1]);
+    const padding = (level - 1) * 16;
+    html += `<mdui-list-item rounded style="padding-left:${padding}px" data-target="${id}">`
+           + `<div slot="headline" class="toc-item-text">${escapeHtml(h.textContent)}</div>`
+           + `</mdui-list-item>`;
+  });
+  html += '</mdui-list>';
+  tocContent.innerHTML = html;
+
+  // 点击跳转
+  tocContent.querySelectorAll('mdui-list-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const target = $(item.dataset.target);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (isMobile) tocSidebar.classList.remove('open');
+      }
+    });
+  });
+
+  // 滚动高亮
+  if (tocObserver) tocObserver.disconnect();
+  tocObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const item = tocContent.querySelector(`[data-target="${entry.target.id}"]`);
+      if (item) {
+        item.classList.toggle('active', entry.isIntersecting);
+      }
+    });
+  }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+
+  headings.forEach(h => tocObserver.observe(h));
 }
 
 // ==================== 搜索系统（Fuse.js） ====================
@@ -195,18 +285,27 @@ const routes = {
 
 function parseRoute(hash) {
   const path = hash.replace('#', '') || '/';
+  // 处理带查询参数的路径
+  const [cleanPath, queryStr] = path.split('?');
+  const params = {};
+  if (queryStr) {
+    queryStr.split('&').forEach(pair => {
+      const [k, v] = pair.split('=');
+      if (k && v) params[k] = decodeURIComponent(v);
+    });
+  }
+
   for (const [pat, handler] of Object.entries(routes)) {
     if (pat.includes(':')) {
       const re = new RegExp('^' + pat.replace(/:\w+/g, '([^/]+)') + '$');
-      const m = path.match(re);
+      const m = cleanPath.match(re);
       if (m) {
         const keys = pat.match(/:\w+/g) || [];
-        const params = {};
         keys.forEach((k, i) => params[k.slice(1)] = m[i + 1]);
         return { handler, params };
       }
-    } else if (path === pat) {
-      return { handler, params: {} };
+    } else if (cleanPath === pat) {
+      return { handler, params };
     }
   }
   return { handler: render404, params: {} };
@@ -223,7 +322,7 @@ async function handleRoute() {
   await handler(container, params);
 
   document.querySelectorAll('mdui-list-item').forEach(n => n.active = false);
-  const base = (location.hash.replace('#', '') || '/').split('/')[1];
+  const base = (location.hash.replace('#', '') || '/').split('/')[1].split('?')[0];
   const navMap = { '': 'nav-home', 'archive': 'nav-archive', 'about': 'nav-about', 'friends': 'nav-friends' };
   const navId = navMap[base];
   if (navId) { const el = $(navId); if (el) el.active = true; }
@@ -279,21 +378,114 @@ function countWords(md) {
     .length;
 }
 
+// ==================== Marked 配置（安全增强） ====================
+function initMarked() {
+  if (typeof marked === 'undefined') return;
+
+  const renderer = new marked.Renderer();
+
+  // 为链接添加安全属性
+  renderer.link = (href, title, text) => {
+    const isExternal = href.startsWith('http');
+    const attrs = isExternal ? ' target="_blank" rel="noopener noreferrer nofollow"' : '';
+    return `<a href="${escapeHtml(href)}"${title ? ` title="${escapeHtml(title)}"` : ''}${attrs}>${text}</a>`;
+  };
+
+  // 为图片添加懒加载和灯箱
+  renderer.image = (href, title, text) => {
+    const cleanHref = href.replace(/^\s+/, '').replace(/\s+$/, '');
+    return `<img src="${escapeHtml(cleanHref)}"${title ? ` title="${escapeHtml(title)}"` : ''} alt="${escapeHtml(text || '')}" loading="lazy" data-zoomable>`;
+  };
+
+  marked.use({
+    gfm: true,
+    breaks: true,
+    renderer,
+    headerIds: true,
+  });
+}
+
+// ==================== 代码复制功能 ====================
+function initCodeCopy(container) {
+  container.querySelectorAll('pre').forEach(pre => {
+    if (pre.querySelector('.code-copy-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'code-copy-btn';
+    btn.innerHTML = '<mdui-icon name="content_copy" style="font-size:16px;"></mdui-icon>';
+    btn.title = '复制代码';
+
+    btn.addEventListener('click', async () => {
+      const code = pre.querySelector('code');
+      const text = code ? code.textContent : pre.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.innerHTML = '<mdui-icon name="check" style="font-size:16px;color:#4caf50;"></mdui-icon>';
+        btn.title = '已复制';
+        setTimeout(() => {
+          btn.innerHTML = '<mdui-icon name="content_copy" style="font-size:16px;"></mdui-icon>';
+          btn.title = '复制代码';
+        }, 2000);
+      } catch (err) {
+        btn.innerHTML = '<mdui-icon name="error" style="font-size:16px;color:#f44336;"></mdui-icon>';
+        setTimeout(() => {
+          btn.innerHTML = '<mdui-icon name="content_copy" style="font-size:16px;"></mdui-icon>';
+        }, 2000);
+      }
+    });
+
+    pre.style.position = 'relative';
+    pre.appendChild(btn);
+  });
+}
+
+// ==================== 图片灯箱 ====================
+function initImageZoom(container) {
+  if (typeof mediumZoom === 'undefined') return;
+
+  // 清理旧的 zoom 实例
+  if (zoomInstance) {
+    zoomInstance.detach();
+  }
+
+  zoomInstance = mediumZoom(container.querySelectorAll('img[data-zoomable]'), {
+    background: 'rgba(var(--mdui-color-scrim), 0.9)',
+    margin: 24,
+  });
+}
+
 // ==================== 页面渲染器 ====================
-async function renderHome(container) {
+async function renderHome(container, params = {}) {
   const posts = await loadPosts();
-  let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">最新文章</div>';
-  if (!posts.length) {
+  let filtered = posts;
+
+  // 标签筛选支持
+  if (params.tag) {
+    currentTagFilter = params.tag;
+    filtered = posts.filter(p => (p.tags || []).includes(params.tag));
+  } else {
+    currentTagFilter = null;
+  }
+
+  let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">';
+  html += currentTagFilter ? `标签「${escapeHtml(currentTagFilter)}」的文章` : '最新文章';
+  html += '</div>';
+
+  if (currentTagFilter) {
+    html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash='#/'">清除筛选</mdui-chip>`;
+  }
+
+  if (!filtered.length) {
     html += '<mdui-card style="padding:24px;text-align:center;">暂无文章</mdui-card>';
   } else {
     html += '<div style="display:grid;gap:16px;">';
-    posts.forEach(p => {
+    filtered.forEach(p => {
       html += `
-        <mdui-card style="padding:16px;cursor:pointer;" onclick="location.hash='#/post/${p.slug}'">
+        <mdui-card class="post-card" style="padding:16px;cursor:pointer;" onclick="location.hash='#/post/${p.slug}'">
           ${p.cover ? `<img src="${escapeHtml(p.cover)}" loading="lazy" style="width:100%;height:200px;object-fit:cover;border-radius:var(--mdui-shape-corner-medium);margin-bottom:12px;" alt="">` : ''}
           <div class="mdui-typescale-title-large" style="margin-bottom:8px;">${escapeHtml(p.title)}</div>
           <div class="mdui-typescale-body-small" style="opacity:0.7;margin-bottom:8px;">
-            ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;">${escapeHtml(t)}</mdui-chip>`).join('')}
+            ${formatDate(p.date)} · ${(p.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="event.stopPropagation();location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
           </div>
           <div class="mdui-typescale-body-medium" style="opacity:0.85;">${escapeHtml(p.description||'')}</div>
         </mdui-card>
@@ -302,7 +494,7 @@ async function renderHome(container) {
     html += '</div>';
   }
   container.innerHTML = html;
-  updateMeta('首页', 'My Blog 首页');
+  updateMeta('首页', '星觅海的个人博客，分享技术文章和生活随笔');
 }
 
 async function renderPost(container, params) {
@@ -317,27 +509,50 @@ async function renderPost(container, params) {
 
     let html = '';
     if (frontMatter.cover) {
-      html += `<img src="${escapeHtml(frontMatter.cover)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--mdui-shape-corner-large);margin-bottom:24px;" alt="">`;
+      html += `<img src="${escapeHtml(frontMatter.cover)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--mdui-shape-corner-large);margin-bottom:24px;" alt="文章封面" data-zoomable>`;
     }
     html += `
       <div style="margin-bottom:24px;">
         <h1 class="mdui-typescale-headline-large" style="margin-bottom:12px;">${escapeHtml(frontMatter.title||slug)}</h1>
         <div class="mdui-typescale-body-small" style="opacity:0.7;">
-          ${formatDate(frontMatter.date)} · ${words} 字 ·
-          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;">${escapeHtml(t)}</mdui-chip>`).join('')}
+          <mdui-icon name="calendar_today" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
+          ${formatDate(frontMatter.date)} · 
+          <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
+          ${words} 字 ·
+          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
         </div>
       </div>
       <article class="mdui-prose post-content">${htmlContent}</article>
-      <div style="margin-top:48px;"><div id="waline"></div></div>
+
+      <mdui-divider style="margin:32px 0;"></mdui-divider>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+        <div class="mdui-typescale-body-small" style="opacity:0.7;">
+          本文链接：<a href="${CONFIG.siteUrl}/#/post/${slug}" style="color:rgb(var(--mdui-color-primary));" onclick="event.preventDefault();navigator.clipboard.writeText(this.href);this.textContent='已复制';setTimeout(()=>this.textContent='${CONFIG.siteUrl}/#/post/${slug}',2000);">${CONFIG.siteUrl}/#/post/${slug}</a>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;"><div id="waline"></div></div>
     `;
     container.innerHTML = html;
 
+    // 代码高亮
     container.querySelectorAll('pre code').forEach(b => {
       if (window.hljs) hljs.highlightElement(b);
     });
+
+    // 代码复制按钮
+    initCodeCopy(container);
+
+    // 图片懒加载 & 灯箱
     container.querySelectorAll('img').forEach(img => {
       if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+      if (!img.hasAttribute('data-zoomable')) img.setAttribute('data-zoomable', '');
     });
+    initImageZoom(container);
+
+    // 生成目录
+    generateTOC(container);
 
     initWaline(slug);
     updateMeta(frontMatter.title||slug, frontMatter.description||'');
@@ -357,28 +572,46 @@ async function renderArchive(container) {
   const allTags = [...new Set(posts.flatMap(p => p.tags||[]))];
 
   let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">文章归档</div>';
+
+  // 统计
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:24px;">
+    <mdui-card style="padding:16px;text-align:center;">
+      <div class="mdui-typescale-headline-medium" style="color:rgb(var(--mdui-color-primary));">${posts.length}</div>
+      <div class="mdui-typescale-body-small" style="opacity:0.7;">文章</div>
+    </mdui-card>
+    <mdui-card style="padding:16px;text-align:center;">
+      <div class="mdui-typescale-headline-medium" style="color:rgb(var(--mdui-color-primary));">${allTags.length}</div>
+      <div class="mdui-typescale-body-small" style="opacity:0.7;">标签</div>
+    </mdui-card>
+    <mdui-card style="padding:16px;text-align:center;">
+      <div class="mdui-typescale-headline-medium" style="color:rgb(var(--mdui-color-primary));">${Object.keys(groups).length}</div>
+      <div class="mdui-typescale-body-small" style="opacity:0.7;">月份</div>
+    </mdui-card>
+  </div>`;
+
   if (allTags.length) {
-    html += '<div class="mdui-typescale-title-small" style="margin-bottom:8px;">标签</div>';
+    html += '<div class="mdui-typescale-title-small" style="margin-bottom:8px;">标签云</div>';
     html += '<div class="tag-cloud">';
     allTags.forEach(t => {
-      html += `<mdui-chip onclick="filterTag('${escapeHtml(t)}')">${escapeHtml(t)}</mdui-chip>`;
+      const count = posts.filter(p => (p.tags||[]).includes(t)).length;
+      html += `<mdui-chip onclick="filterTag('${escapeHtml(t)}')" title="${count} 篇文章">${escapeHtml(t)} <span style="opacity:0.6;">(${count})</span></mdui-chip>`;
     });
     html += '</div><mdui-divider style="margin-bottom:24px;"></mdui-divider>';
   }
   Object.entries(groups).forEach(([m, ps]) => {
     html += `<div style="margin-bottom:24px;">
-      <div class="mdui-typescale-title-medium" style="margin-bottom:12px;color:rgb(var(--mdui-color-primary));">${m}</div>
+      <div class="mdui-typescale-title-medium" style="margin-bottom:12px;color:rgb(var(--mdui-color-primary));">${m} <span style="opacity:0.6;font-size:14px;">(${ps.length} 篇)</span></div>
       <mdui-list>`;
     ps.forEach(p => {
       html += `<mdui-list-item rounded href="#/post/${p.slug}">
         <div slot="headline">${escapeHtml(p.title)}</div>
-        <div slot="description">${formatDate(p.date)}</div>
+        <div slot="description">${formatDate(p.date)} · ${(p.tags||[]).join(', ')}</div>
       </mdui-list-item>`;
     });
     html += '</mdui-list></div>';
   });
   container.innerHTML = html;
-  updateMeta('归档', '文章归档');
+  updateMeta('归档', '文章归档与标签');
 }
 
 async function renderAbout(container) {
@@ -390,12 +623,16 @@ async function renderAbout(container) {
 
     let html = '<div style="text-align:center;margin-bottom:32px;">';
     if (frontMatter.avatar) {
-      html += `<mdui-avatar src="${escapeHtml(frontMatter.avatar)}" style="width:120px;height:120px;margin-bottom:16px;"></mdui-avatar>`;
+      html += `<mdui-avatar src="${escapeHtml(frontMatter.avatar)}" style="width:120px;height:120px;margin-bottom:16px;" alt="头像"></mdui-avatar>`;
     }
-    html += `<div class="mdui-typescale-headline-medium">${escapeHtml(frontMatter.name||'博主')}</div></div>`;
+    html += `<div class="mdui-typescale-headline-medium">${escapeHtml(frontMatter.name||'博主')}</div>`;
+    if (frontMatter.bio) {
+      html += `<div class="mdui-typescale-body-medium" style="opacity:0.7;margin-top:8px;">${escapeHtml(frontMatter.bio)}</div>`;
+    }
+    html += '</div>';
     html += `<article class="mdui-prose">${body}</article>`;
     container.innerHTML = html;
-    updateMeta('关于', '关于博主');
+    updateMeta('关于', '关于星觅海');
   } catch (err) {
     container.innerHTML = '<mdui-card style="padding:24px;">关于页面加载失败</mdui-card>';
   }
@@ -408,13 +645,14 @@ async function renderFriends(container) {
   html += '<div class="friends-grid">';
   friends.forEach(f => {
     html += `
-      <mdui-card style="padding:16px;cursor:pointer;" onclick="location.hash='#/friend/${encodeURIComponent(f.name)}'">
+      <mdui-card class="friend-card" style="padding:16px;cursor:pointer;" onclick="location.hash='#/friend/${encodeURIComponent(f.name)}'">
         <div style="display:flex;align-items:center;gap:12px;">
-          <mdui-avatar src="${escapeHtml(f.avatar)}" style="width:48px;height:48px;"></mdui-avatar>
-          <div>
-            <div class="mdui-typescale-title-medium">${escapeHtml(f.name)}</div>
-            <div class="mdui-typescale-body-small" style="opacity:0.7;">${escapeHtml(f.desc||'')}</div>
+          <mdui-avatar src="${escapeHtml(f.avatar)}" style="width:48px;height:48px;" alt="${escapeHtml(f.name)}"></mdui-avatar>
+          <div style="flex:1;min-width:0;">
+            <div class="mdui-typescale-title-medium" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.name)}</div>
+            <div class="mdui-typescale-body-small" style="opacity:0.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.desc||'')}</div>
           </div>
+          <mdui-icon name="arrow_forward" style="opacity:0.4;"></mdui-icon>
         </div>
       </mdui-card>
     `;
@@ -434,8 +672,9 @@ async function renderFriendDetail(container, params) {
 
     let html = `
       <div style="text-align:center;margin-bottom:32px;">
-        <mdui-avatar src="${escapeHtml(f.avatar)}" style="width:80px;height:80px;margin-bottom:16px;"></mdui-avatar>
+        <mdui-avatar src="${escapeHtml(f.avatar)}" style="width:80px;height:80px;margin-bottom:16px;" alt="${escapeHtml(f.name)}"></mdui-avatar>
         <div class="mdui-typescale-headline-medium">${escapeHtml(f.name)}</div>
+        <div class="mdui-typescale-body-medium" style="opacity:0.7;margin-top:8px;">${escapeHtml(f.desc||'')}</div>
         <div style="margin-top:12px;">
           <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener">
             <mdui-button variant="filled">访问博客</mdui-button>
@@ -451,15 +690,36 @@ async function renderFriendDetail(container, params) {
     container.innerHTML = html;
     updateMeta(f.name, f.desc||'');
 
-    const rssUrl = encodeURIComponent(f.rss);
-    const rssRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
-    const data = await rssRes.json();
-    const rssContainer = $('friend-rss');
+    // 使用多个 RSS 代理作为 fallback
+    const rssUrls = [
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.rss)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(f.rss)}`,
+    ];
 
-    if (data.status !== 'ok') throw new Error(data.message || 'RSS 解析失败');
+    let rssData = null;
+    for (const url of rssUrls) {
+      try {
+        const rssRes = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!rssRes.ok) continue;
+        const data = await rssRes.json();
+        if (data.status === 'ok' || data.items) {
+          rssData = data;
+          break;
+        }
+      } catch (e) { /* continue */ }
+    }
+
+    const rssContainer = $('friend-rss');
+    if (!rssData || !rssData.items) {
+      rssContainer.innerHTML = `<mdui-card style="padding:16px;text-align:center;">
+        <mdui-icon name="rss_feed" style="font-size:32px;opacity:0.4;"></mdui-icon>
+        <div class="mdui-typescale-body-medium" style="margin-top:8px;">RSS 加载失败，请直接访问博客</div>
+      </mdui-card>`;
+      return;
+    }
 
     let list = '<mdui-list>';
-    data.items.slice(0, 10).forEach(item => {
+    rssData.items.slice(0, 10).forEach(item => {
       list += `<mdui-list-item rounded href="${escapeHtml(item.link)}" target="_blank" rel="noopener">
         <div slot="headline">${escapeHtml(item.title)}</div>
         <div slot="description">${formatDate(item.pubDate)}</div>
@@ -524,16 +784,27 @@ function updateMeta(title, desc) {
 
 // ==================== 标签筛选 ====================
 function filterTag(tag) {
-  console.log('Filter by tag:', tag);
+  location.hash = `/#/?tag=${encodeURIComponent(tag)}`;
+}
+
+// ==================== PWA 注册 ====================
+function initPWA() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // 静默失败，不影响功能
+    });
+  }
 }
 
 // ==================== 初始化入口 ====================
 document.addEventListener('DOMContentLoaded', () => {
   $('year').textContent = new Date().getFullYear();
   initTheme();
-  initZoomBlock();
   initSidebar();
   initSearch();
+  initTOC();
+  initReadingProgress();
+  initMarked();
   updatePageviews();
   handleRoute();
   window.addEventListener('hashchange', handleRoute);
