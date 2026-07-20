@@ -807,7 +807,7 @@ async function renderFriendDetail(container, params) {
       list += '<a href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener" class="friend-rss-item">';
       list += '<div class="friend-rss-cover' + (hasCover ? '' : ' no-image') + '">';
       if (hasCover) {
-        list += '<img src="' + escapeHtml(cover) + '" loading="lazy" alt="" onerror="this.style.display='none';this.parentElement.classList.add('no-image');">';
+        list += '<img src="' + escapeHtml(cover) + '" loading="lazy" alt="" onerror="this.style.display=\'none\';this.parentElement.classList.add(\'no-image\');">';
       }
       list += '</div>';
       list += '<div class="friend-rss-info">';
