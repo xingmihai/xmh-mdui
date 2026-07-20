@@ -44,6 +44,66 @@ function formatNumber(num) {
   return String(num);
 }
 
+function replaceGithubCards(html) {
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+
+  const walker = document.createTreeWalker(temp, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => {
+      // 跳过代码块/代码行内的文本
+      let el = node.parentElement;
+      while (el && el !== temp) {
+        if (el.tagName === 'PRE' || el.tagName === 'CODE' || el.tagName === 'SAMP') {
+          return NodeFilter.FILTER_REJECT;
+        }
+        el = el.parentElement;
+      }
+      if (/::github\{repo="[^"]+"\}/.test(node.textContent)) {
+        return NodeFilter.FILTER_ACCEPT;
+      }
+      return NodeFilter.FILTER_SKIP;
+    }
+  });
+
+  const nodesToReplace = [];
+  let node;
+  while ((node = walker.nextNode()) !== null) {
+    nodesToReplace.push(node);
+  }
+
+  nodesToReplace.forEach(textNode => {
+    const text = textNode.textContent;
+    const parts = [];
+    let lastIndex = 0;
+    const regex = /::github\{repo="([^"]+)"\}/g;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = generateGithubCardHtml(match[1]);
+      // 提取 mdui-card 元素（跳过外层 div）
+      const card = wrapper.firstElementChild;
+      if (card) parts.push(card);
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    if (parts.length > 0) {
+      const parent = textNode.parentNode;
+      parts.forEach(p => parent.insertBefore(p, textNode));
+      parent.removeChild(textNode);
+    }
+  });
+
+  return temp.innerHTML;
+}
+
 function generateGithubCardHtml(repo) {
   const [owner, name] = repo.split('/');
   if (!owner || !name) return `::github{repo="${repo}"}`;
@@ -715,14 +775,8 @@ async function renderPost(container, params) {
       }
     );
     // 后处理：GitHub 仓库卡片
-    htmlContent = htmlContent.replace(
-      /<p>\s*::github\{repo="([^"]+)"\}\s*<\/p>/g,
-      (match, repo) => generateGithubCardHtml(repo)
-    );
-    htmlContent = htmlContent.replace(
-      /::github\{repo="([^"]+)"\}/g,
-      (match, repo) => generateGithubCardHtml(repo)
-    );
+    // 使用 DOM 操作安全替换，避免误伤代码块
+    htmlContent = replaceGithubCards(htmlContent);
     const words = countWords(content);
 
     let html = '';
