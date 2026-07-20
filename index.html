@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css">
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.5.0/dist/fuse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/@waline/client@3.3.0/dist/waline.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.css">
   <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script>
@@ -64,9 +64,9 @@
       </div>
       <div class="search-wrap sidebar-text">
         <mdui-text-field id="search-input" variant="outlined" placeholder="搜索文章..." icon="search" helper="输入关键词实时搜索" class="search-field"></mdui-text-field>
-        <mdui-card class="search-dropdown" id="search-dropdown" variant="elevated">
-          <mdui-list id="search-results"></mdui-list>
-        </mdui-card>
+        <div class="search-dropdown" id="search-dropdown">
+          <div id="search-results"></div>
+        </div>
       </div>
       <mdui-divider class="nav-divider"></mdui-divider>
       <mdui-list class="nav-list">
@@ -89,9 +89,15 @@
       </mdui-list>
       <mdui-divider class="nav-divider"></mdui-divider>
       <div class="theme-wrap">
-        <mdui-icon-button id="theme-btn" title="切换主题">
+        <mdui-button-icon id="theme-light" title="亮色模式">
+          <mdui-icon name="brightness_7"></mdui-icon>
+        </mdui-button-icon>
+        <mdui-button-icon id="theme-dark" title="暗色模式">
+          <mdui-icon name="brightness_2"></mdui-icon>
+        </mdui-button-icon>
+        <mdui-button-icon id="theme-auto" title="跟随系统">
           <mdui-icon name="brightness_auto"></mdui-icon>
-        </mdui-icon-button>
+        </mdui-button-icon>
       </div>
     </div>
   </mdui-card>

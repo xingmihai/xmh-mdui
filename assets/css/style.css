@@ -115,11 +115,14 @@ body {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 200;
+  z-index: 250;
   max-height: 320px;
   overflow-y: auto;
   display: none;
-  --mdui-elevation-level: 3;
+  background: rgb(var(--mdui-color-surface-container));
+  border-radius: var(--mdui-shape-corner-medium);
+  box-shadow: var(--mdui-elevation-level3);
+  padding: 4px 0;
 }
 
 /* 导航 */
@@ -134,8 +137,23 @@ body {
 
 /* 主题切换 */
 .theme-wrap {
-  text-align: center;
-  padding: 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  min-height: 48px;
+}
+
+.theme-wrap mdui-button-icon {
+  opacity: 0.4;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.theme-wrap mdui-button-icon.active {
+  opacity: 1;
+  background-color: rgba(var(--mdui-color-primary), 0.15);
+  color: rgb(var(--mdui-color-primary));
 }
 
 /* 主内容区 */
