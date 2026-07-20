@@ -37,6 +37,34 @@ const debounce = (fn, wait) => {
   };
 };
 
+// ==================== Mermaid 主题适配 ====================
+function getMermaidTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.contains('mdui-theme-dark') ||
+    (html.classList.contains('mdui-theme-auto') &&
+     window.matchMedia('(prefers-color-scheme: dark)').matches);
+  return isDark ? 'dark' : 'default';
+}
+
+function initMermaid() {
+  if (typeof mermaid === 'undefined') return;
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: getMermaidTheme(),
+    securityLevel: 'strict',
+  });
+}
+
+function renderMermaid(container) {
+  if (typeof mermaid === 'undefined') return;
+  // 先更新主题
+  mermaid.initialize({ theme: getMermaidTheme() });
+  const nodes = container.querySelectorAll('.mermaid');
+  if (!nodes.length) return;
+  // mermaid v10+ 使用 run()
+  mermaid.run({ querySelector: '.mermaid' });
+}
+
 // ==================== 主题系统 ====================
 function initTheme() {
   const btnLight = $('theme-light');
@@ -49,6 +77,10 @@ function initTheme() {
     html.classList.add(`mdui-theme-${theme}`);
     currentTheme = theme;
     localStorage.setItem('theme', theme);
+    // 同步 Mermaid 主题
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ theme: getMermaidTheme() });
+    }
 
     [btnLight, btnDark, btnAuto].forEach(btn => {
       if (btn) btn.classList.remove('active');
@@ -427,6 +459,16 @@ function initMarked() {
     return `<a href="${escapeHtml(hrefStr)}"${title ? ` title="${escapeHtml(title)}"` : ''}${attrs}>${text}</a>`;
   };
 
+  // Mermaid 图表支持：将 \`\`\`mermaid 代码块转为 mermaid 容器
+  renderer.code = ({ text, lang }) => {
+    if (lang === 'mermaid') {
+      return `<div class="mermaid">${text}</div>`;
+    }
+    // 默认代码块（保持原有高亮行为）
+    const escaped = escapeHtml(text);
+    return `<pre><code${lang ? ` class="language-${escapeHtml(lang)}"` : ''}>${escaped}</code></pre>`;
+  };
+
   renderer.image = ({ href, title, text }) => {
     const cleanHref = String(href || '').replace(/^\s+/, '').replace(/\s+$/, '');
     return `<img src="${escapeHtml(cleanHref)}"${title ? ` title="${escapeHtml(title)}"` : ''} alt="${escapeHtml(text || '')}" loading="lazy" data-zoomable>`;
@@ -603,6 +645,9 @@ async function renderPost(container, params) {
 
     // 生成目录
     generateTOC(container);
+
+    // 渲染 Mermaid 图表
+    renderMermaid(container);
 
     initWaline(slug);
     updateMeta(frontMatter.title||slug, frontMatter.description||'');
@@ -880,6 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTOC();
   initReadingProgress();
   initMarked();
+  initMermaid();
   updatePageviews();
   handleRoute();
   window.addEventListener('hashchange', handleRoute);
