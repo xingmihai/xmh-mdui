@@ -677,6 +677,8 @@ let htmlContent = marked.parse(processedContent);
 
     // 图片懒加载 & 灯箱
     container.querySelectorAll('img').forEach(img => {
+      // 跳过 GitHub 卡片内的徽章和头像
+      if (img.closest('.gh-badges') || img.closest('.gh-avatar-wrap')) return;
       if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
       if (!img.hasAttribute('data-zoomable')) img.setAttribute('data-zoomable', '');
     });

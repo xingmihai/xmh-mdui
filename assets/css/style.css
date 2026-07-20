@@ -559,8 +559,7 @@ img[loading="lazy"] {
 .post-content .gh-avatar-wrap img.gh-avatar {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover;
-  object-position: center;
+  object-fit: fill;
   display: block;
   border-radius: 0 !important;
 }
