@@ -1,127 +1,68 @@
-const fs = require('fs');
-const path = require('path');
-const { marked } = require('marked');
-const hljs = require('highlight.js');
+const CACHE_NAME = 'mdui-blog-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/assets/css/style.css',
+  '/assets/js/app.js',
+  '/about.md',
+  '/friends.json',
+  '/search.json'
+];
 
-marked.setOptions({
-  highlight(code, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang }).value;
-    }
-    return hljs.highlightAuto(code).value;
-  },
-  breaks: true,
+// 安装时缓存静态资源
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(STATIC_ASSETS);
+    }).catch(() => {})
+  );
+  self.skipWaiting();
 });
 
-const POSTS_DIR = path.join(__dirname, 'posts');
-const SITE_URL = 'https://mdui.xmhai.cn';
-const SITE_NAME = '星觅海的博客';
-const SITE_DESC = 'A pure static blog powered by MDUI v2';
+// 激活时清理旧缓存
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
+  );
+  self.clients.claim();
+});
 
-function parseFrontMatter(content) {
-  const m = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (!m) return { frontMatter: {}, content };
-  const fm = {};
-  m[1].split('\n').forEach(line => {
-    const idx = line.indexOf(':');
-    if (idx < 0) return;
-    const key = line.slice(0, idx).trim();
-    let val = line.slice(idx + 1).trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1);
-    }
-    if (val.startsWith('[') && val.endsWith(']')) {
-      try { val = JSON.parse(val.replace(/'/g, '"')); } catch(e) {
-        val = val.slice(1, -1).split(',').map(s => s.trim().replace(/['"]/g, ''));
-      }
-    }
-    fm[key] = val;
-  });
-  return { frontMatter: fm, content: m[2].trim() };
-}
-
-function stripMarkdown(md) {
-  return md
-    .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/\[.*?\]\(.*?\)/g, '$1')
-    .replace(/[#*`~>|\-]/g, ' ')
-    .replace(/<.*?>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function escapeXml(str) {
-  if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-}
-
-function toRfc822(dateStr) {
-  return new Date(dateStr).toUTCString();
-}
-
-async function build() {
-  const files = fs.readdirSync(POSTS_DIR).filter(f => f.endsWith('.md')).sort();
-  const posts = [];
-  const rssItems = [];
-
-  for (const file of files) {
-    const slug = path.basename(file, '.md');
-    const raw = fs.readFileSync(path.join(POSTS_DIR, file), 'utf-8');
-    const { frontMatter, content } = parseFrontMatter(raw);
-    if (!frontMatter.title) continue;
-
-    const htmlBody = marked.parse(content);
-    const plain = stripMarkdown(content);
-
-    posts.push({
-      slug,
-      title: frontMatter.title,
-      date: frontMatter.date || new Date().toISOString(),
-      tags: frontMatter.tags || [],
-      description: frontMatter.description || '',
-      content: plain,
-    });
-
-    let encoded = htmlBody;
-    if (frontMatter.cover) {
-      encoded = `<img src="${escapeXml(frontMatter.cover)}" alt="cover"/><br/>` + encoded;
-    }
-    encoded = encoded.replace(/<video[^>]*src="([^"]*)"[^>]*>[\s\S]*?<\/video>/g,
-      '<p><a href="$1">▶ 观看视频</a></p>');
-
-    rssItems.push(`
-      <item>
-        <title>${escapeXml(frontMatter.title)}</title>
-        <link>${SITE_URL}/#/post/${slug}</link>
-        <guid isPermaLink="false">${SITE_URL}/#/post/${slug}</guid>
-        <pubDate>${toRfc822(frontMatter.date)}</pubDate>
-        <description>${escapeXml(frontMatter.description || plain.slice(0, 200))}</description>
-        <content:encoded><![CDATA[${encoded}]]></content:encoded>
-        ${(frontMatter.tags || []).map(t => `<category>${escapeXml(t)}</category>`).join('\n        ')}
-      </item>
-    `);
+// 网络优先策略（文章），缓存回退（静态资源）
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // 只处理同源请求
+  if (url.origin !== self.location.origin) return;
+  
+  // 文章 Markdown 使用网络优先
+  if (url.pathname.startsWith('/posts/')) {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request))
+    );
+    return;
   }
-
-  fs.writeFileSync(path.join(__dirname, 'search.json'), JSON.stringify(posts, null, 2));
-  console.log('✓ search.json');
-
-  const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0"
-  xmlns:content="http://purl.org/rss/1.0/modules/content/"
-  xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>${escapeXml(SITE_NAME)}</title>
-    <link>${SITE_URL}</link>
-    <description>${escapeXml(SITE_DESC)}</description>
-    <language>zh-CN</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml"/>
-    ${rssItems.join('\n    ')}
-  </channel>
-</rss>`;
-
-  fs.writeFileSync(path.join(__dirname, 'rss.xml'), rss);
-  console.log('✓ rss.xml');
-}
-
-build().catch(console.error);
+  
+  // 静态资源使用缓存优先
+  event.respondWith(
+    caches.match(request).then(response => {
+      if (response) return response;
+      return fetch(request).then(fetchResponse => {
+        if (fetchResponse.ok && request.method === 'GET') {
+          const clone = fetchResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+        }
+        return fetchResponse;
+      }).catch(() => {
+        // 离线时返回 404 页面
+        if (request.mode === 'navigate') {
+          return caches.match('/');
+        }
+      });
+    })
+  );
+});
