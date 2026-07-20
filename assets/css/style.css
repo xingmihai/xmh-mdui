@@ -549,13 +549,20 @@ img[loading="lazy"] {
   margin-bottom: 12px;
   pointer-events: none;
 }
-.post-content .gh-avatar {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 50% !important;
+.gh-avatar-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
   flex-shrink: 0;
-  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+.post-content .gh-avatar-wrap img.gh-avatar {
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
+  display: block;
+  border-radius: 0 !important;
 }
 .gh-info {
   flex: 1;
