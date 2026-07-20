@@ -14,7 +14,6 @@ const SITE_NAME = '星觅海的博客';
 const SITE_URL = 'https://mdui.xmhai.cn';
 const SITE_DESC = '星觅海的个人博客，分享技术文章和生活随笔';
 
-// 确保 MDX 编译输出目录存在
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
@@ -64,6 +63,63 @@ function mdxToPlainText(mdx) {
     .trim();
 }
 
+// 将 Markdown 表格转换为 HTML 表格（GFM 替代方案）
+function markdownTableToHtml(text) {
+  // 匹配完整的 Markdown 表格块
+  return text.replace(
+    /(?:^|\n)((?:\|[^\n]*\|(?:\r?\n)?)+)/g,
+    (match, tableBlock) => {
+      const lines = tableBlock.trim().split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) return match;
+
+      // 检查第二行是否是分隔行 (|---|---|)
+      const sepLine = lines[1].trim();
+      if (!/^\|?[\s\-:|]+\|?$/.test(sepLine)) return match;
+
+      const headerCells = parseTableRow(lines[0]);
+      const bodyRows = lines.slice(2).map(parseTableRow);
+
+      let html = '<table>\n<thead>\n<tr>';
+      headerCells.forEach(cell => {
+        html += `<th>${escapeXml(cell.trim())}</th>`;
+      });
+      html += '</tr>\n</thead>\n<tbody>\n';
+
+      bodyRows.forEach(row => {
+        html += '<tr>';
+        row.forEach((cell, i) => {
+          html += `<td>${escapeHtml(cell.trim())}</td>`;
+        });
+        // 补齐缺失的单元格
+        for (let i = row.length; i < headerCells.length; i++) {
+          html += '<td></td>';
+        }
+        html += '</tr>\n';
+      });
+      html += '</tbody>\n</table>';
+      return '\n' + html + '\n';
+    }
+  );
+}
+
+function parseTableRow(line) {
+  const trimmed = line.trim();
+  const content = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
+  const withoutEnd = content.endsWith('|') ? content.slice(0, -1) : content;
+  return withoutEnd.split('|').map(s => s.trim());
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement ? null : null;
+  // 简单转义
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // ========== MDX 组件（构建时注入） ==========
 const MDX_COMPONENTS = {
   Alert: ({ type = 'info', children }) => {
@@ -84,14 +140,13 @@ const MDX_COMPONENTS = {
   Column: ({ children }) => React.createElement('div', { className: 'mdx-column' }, children),
 };
 
-async function compileMDXToHtml(mdxBody) {
-  // 动态导入 ESM 插件
-  const { default: remarkGfm } = await import('remark-gfm');
+function compileMDXToHtml(mdxBody) {
+  // 预处理：把 Markdown 表格转成 HTML 表格
+  const processed = markdownTableToHtml(mdxBody);
 
-  const vfile = compileSync(mdxBody, {
+  const vfile = compileSync(processed, {
     outputFormat: 'function-body',
     development: false,
-    remarkPlugins: [remarkGfm],
   });
   const code = String(vfile);
 
@@ -110,50 +165,47 @@ async function compileMDXToHtml(mdxBody) {
 }
 
 // ========== 构建主函数 ==========
-async function build() {
-  // 清理旧编译产物
+function build() {
   if (fs.existsSync(OUTPUT_DIR)) {
     fs.readdirSync(OUTPUT_DIR).forEach(f => fs.unlinkSync(path.join(OUTPUT_DIR, f)));
   }
 
-  const files = [];
-  for (const f of fs.readdirSync(POSTS_DIR).filter(f => f.endsWith('.md') || f.endsWith('.mdx'))) {
-    const raw = fs.readFileSync(path.join(POSTS_DIR, f), 'utf-8');
-    const { frontMatter, content: body } = parseFrontMatter(raw);
-    const slug = f.replace(/\.(md|mdx)$/, '');
-    const isMdx = f.endsWith('.mdx');
+  const files = fs.readdirSync(POSTS_DIR)
+    .filter(f => f.endsWith('.md') || f.endsWith('.mdx'))
+    .map(f => {
+      const raw = fs.readFileSync(path.join(POSTS_DIR, f), 'utf-8');
+      const { frontMatter, content: body } = parseFrontMatter(raw);
+      const slug = f.replace(/\.(md|mdx)$/, '');
+      const isMdx = f.endsWith('.mdx');
 
-    let compiledHtml = null;
-    if (isMdx) {
-      try {
-        compiledHtml = await compileMDXToHtml(body);
-        fs.writeFileSync(path.join(OUTPUT_DIR, `${slug}.html`), compiledHtml);
-        console.log(`✅ MDX 编译完成: ${f}`);
-      } catch (e) {
-        console.error(`❌ MDX 编译失败 ${f}:`, e.message);
-        console.error(e.stack);
+      let compiledHtml = null;
+      if (isMdx) {
+        try {
+          compiledHtml = compileMDXToHtml(body);
+          fs.writeFileSync(path.join(OUTPUT_DIR, `${slug}.html`), compiledHtml);
+          console.log(`✅ MDX 编译完成: ${f}`);
+        } catch (e) {
+          console.error(`❌ MDX 编译失败 ${f}:`, e.message);
+          console.error(e.stack);
+        }
       }
-    }
 
-    files.push({
-      slug,
-      title: frontMatter.title || slug,
-      date: frontMatter.date || new Date().toISOString().split('T')[0],
-      tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
-      description: frontMatter.description || '',
-      cover: frontMatter.cover || '',
-      format: isMdx && compiledHtml ? 'mdx' : 'md',
-      content: isMdx ? mdxToPlainText(body).slice(0, 5000) : body.slice(0, 5000),
-    });
-  }
+      return {
+        slug,
+        title: frontMatter.title || slug,
+        date: frontMatter.date || new Date().toISOString().split('T')[0],
+        tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
+        description: frontMatter.description || '',
+        cover: frontMatter.cover || '',
+        format: isMdx && compiledHtml ? 'mdx' : 'md',
+        content: isMdx ? mdxToPlainText(body).slice(0, 5000) : body.slice(0, 5000),
+      };
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  files.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // 生成 search.json
   fs.writeFileSync(OUTPUT_SEARCH, JSON.stringify(files, null, 2));
   console.log('✅ search.json 生成完成');
 
-  // 生成 rss.xml
   const now = new Date().toUTCString();
   const items = files.map(p => `
     <item>
