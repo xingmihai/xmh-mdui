@@ -1,7 +1,7 @@
 ---
-title: MDUI 组件大观园：一站式组件展示
+title: MDUI 组件拓展
 date: 2026-07-21
-tags: ["MDUI", "组件", "前端", "UI"]
+tags: ["MDUI", "教程"]
 description: 本文展示了 MDUI v2 中各类组件的实际效果，包括按钮、卡片、输入框、列表、进度条、对话框等，方便快速查阅组件样式。
 cover: https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200
 ---
@@ -74,21 +74,21 @@ MDUI 的按钮支持四种变体：`filled`（填充）、`tonal`（色调）、
   </div>
 </mdui-card>
 
-# GitHub 仓库卡片
+### GitHub 仓库卡片
 
 > 只需一行代码，即可在文章中插入美观的 GitHub 仓库信息卡片。
 
-## 我的项目
+#### 我的项目
 
 ::github{card="xingmihai/xmh-mdui" desc="MDUI v2 个人博客主题"}
 
-## 其他示例
+#### 其他示例
 
 ::github{card="microsoft/vscode" desc="Visual Studio Code"}
 
 ::github{card="facebook/react" desc="A JavaScript library for building user interfaces"}
 
-## 用法说明
+#### 用法说明
 
 在 Markdown 中插入以下语法即可：
 
