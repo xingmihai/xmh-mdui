@@ -50,17 +50,19 @@ function initTheme() {
     currentTheme = theme;
     localStorage.setItem('theme', theme);
 
-    [btnLight, btnDark, btnAuto].forEach(btn => btn.classList.remove('active'));
-    if (theme === 'light') btnLight.classList.add('active');
-    else if (theme === 'dark') btnDark.classList.add('active');
-    else btnAuto.classList.add('active');
+    [btnLight, btnDark, btnAuto].forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+    if (theme === 'light' && btnLight) btnLight.classList.add('active');
+    else if (theme === 'dark' && btnDark) btnDark.classList.add('active');
+    else if (btnAuto) btnAuto.classList.add('active');
 
     syncWalineTheme();
   };
 
-  btnLight.addEventListener('click', () => apply('light'));
-  btnDark.addEventListener('click',  () => apply('dark'));
-  btnAuto.addEventListener('click',  () => apply('auto'));
+  if (btnLight) btnLight.addEventListener('click', () => apply('light'));
+  if (btnDark)  btnDark.addEventListener('click',  () => apply('dark'));
+  if (btnAuto)  btnAuto.addEventListener('click',  () => apply('auto'));
 
   apply(currentTheme);
 
