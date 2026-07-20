@@ -569,7 +569,7 @@ async function renderPost(container, params) {
           ${formatDate(frontMatter.date)} · 
           <mdui-icon name="text_snippet" style="font-size:16px;vertical-align:text-bottom;margin-right:4px;"></mdui-icon>
           ${words} 字 ·
-          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/#/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
+          ${(frontMatter.tags||[]).map(t => `<mdui-chip style="margin-right:4px;cursor:pointer;" onclick="location.hash='/?tag=${encodeURIComponent(t)}'">${escapeHtml(t)}</mdui-chip>`).join('')}
         </div>
       </div>
       <article class="mdui-prose post-content">${htmlContent}</article>
