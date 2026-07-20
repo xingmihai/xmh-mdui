@@ -74,6 +74,32 @@ MDUI 的按钮支持四种变体：`filled`（填充）、`tonal`（色调）、
   </div>
 </mdui-card>
 
+# GitHub 仓库卡片
+
+> 只需一行代码，即可在文章中插入美观的 GitHub 仓库信息卡片。
+
+## 我的项目
+
+::github{card="xingmihai/xmh-mdui" desc="MDUI v2 个人博客主题"}
+
+## 其他示例
+
+::github{card="microsoft/vscode" desc="Visual Studio Code"}
+
+::github{card="facebook/react" desc="A JavaScript library for building user interfaces"}
+
+## 用法说明
+
+在 Markdown 中插入以下语法即可：
+
+```markdown
+::github{card="用户名/仓库名" desc="仓库描述"}
+```
+
+| 参数 | 必填 | 说明 |
+|------|------|------|
+| `card` | 是 | GitHub 用户名和仓库名，格式 `用户/仓库` |
+| `desc` | 否 | 仓库描述，默认显示 `GitHub Repository` |
 ---
 
 ## 三、输入控件

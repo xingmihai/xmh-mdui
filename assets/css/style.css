@@ -630,3 +630,60 @@ img[loading="lazy"] {
 
 .mdx-column > *:first-child { margin-top: 0; }
 .mdx-column > *:last-child { margin-bottom: 0; }
+
+/* GitHub 卡片自定义语法 */
+.gh-card {
+  padding: 16px;
+  margin: 16px 0;
+  cursor: pointer;
+  max-width: 480px;
+  display: block;
+}
+.gh-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  pointer-events: none;
+}
+.gh-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gh-info {
+  flex: 1;
+  min-width: 0;
+}
+.gh-name {
+  font-size: var(--mdui-typescale-title-medium-size);
+  font-weight: 500;
+  line-height: var(--mdui-typescale-title-medium-line-height);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gh-desc {
+  font-size: var(--mdui-typescale-body-small-size);
+  line-height: var(--mdui-typescale-body-small-line-height);
+  opacity: 0.6;
+  margin-top: 2px;
+}
+.gh-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.gh-badges a {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.gh-badges img {
+  height: 20px;
+  display: inline-block !important;
+  min-height: auto !important;
+  vertical-align: middle;
+}

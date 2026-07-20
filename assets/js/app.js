@@ -683,6 +683,30 @@ async function renderPost(container, params) {
     const { frontMatter, content } = parseFrontMatter(md);
     let htmlContent = marked.parse(content);
 
+// 自定义语法：::github{card="用户名/仓库名" desc="描述"}
+htmlContent = htmlContent.replace(
+  /::github\{card="([^"]+)"(?:\s+desc="([^"]*)")?\}/g,
+  (match, repo, desc = 'GitHub Repository') => {
+    const [user, repoName] = repo.split('/');
+    return `
+<mdui-card class="gh-card" onclick="window.open('https://github.com/${repo}','_blank')">
+  <div class="gh-header">
+    <img class="gh-avatar" src="https://github.com/${user}.png" alt="${user}">
+    <div class="gh-info">
+      <div class="gh-name">${user} / ${repoName}</div>
+      <div class="gh-desc">${desc}</div>
+    </div>
+    <mdui-icon name="open_in_new" style="opacity:0.4"></mdui-icon>
+  </div>
+  <div class="gh-badges">
+    <a href="https://github.com/${repo}/stargazers" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/${repo}?style=flat&logo=github&label=Stars" alt="Stars"></a>
+    <a href="https://github.com/${repo}/network/members" target="_blank" rel="noopener"><img src="https://img.shields.io/github/forks/${repo}?style=flat&logo=github&label=Forks" alt="Forks"></a>
+    <a href="https://github.com/${repo}/blob/main/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/${repo}?style=flat" alt="License"></a>
+  </div>
+</mdui-card>`;
+  }
+);
+
     // 后处理：将 mermaid 代码块替换为 mermaid 容器
     htmlContent = htmlContent.replace(
       /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
