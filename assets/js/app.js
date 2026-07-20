@@ -874,7 +874,7 @@ async function renderAbout(container) {
 async function renderFriends(container) {
   const res = await fetch('/friends.json');
   const friends = await res.json();
-  let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">朋友们</div>';
+  let html = '<div class="mdui-typescale-headline-medium" style="margin-bottom:24px;">点击可以查看文章</div>';
   html += '<div class="friends-grid">';
   friends.forEach(f => {
     html += `
