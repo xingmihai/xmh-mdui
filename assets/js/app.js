@@ -508,7 +508,7 @@ async function renderHome(container, params = {}) {
     html += '</div>';
 
     if (currentTagFilter) {
-      html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash='#/'">清除筛选</mdui-chip>`;
+      html += `<mdui-chip style="margin-bottom:16px;" onclick="location.hash='#/'">返回首页</mdui-chip>`;
     }
 
     if (!filtered.length) {
