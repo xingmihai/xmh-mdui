@@ -39,8 +39,9 @@ const debounce = (fn, wait) => {
 
 // ==================== 主题系统 ====================
 function initTheme() {
-  const btn = $('theme-btn');
-  const icon = btn.querySelector('mdui-icon');
+  const btnLight = $('theme-light');
+  const btnDark  = $('theme-dark');
+  const btnAuto  = $('theme-auto');
 
   const apply = theme => {
     const html = document.documentElement;
@@ -49,17 +50,17 @@ function initTheme() {
     currentTheme = theme;
     localStorage.setItem('theme', theme);
 
-    icon.name = theme === 'light' ? 'brightness_7'
-              : theme === 'dark'  ? 'brightness_2'
-              : 'brightness_auto';
+    [btnLight, btnDark, btnAuto].forEach(btn => btn.classList.remove('active'));
+    if (theme === 'light') btnLight.classList.add('active');
+    else if (theme === 'dark') btnDark.classList.add('active');
+    else btnAuto.classList.add('active');
 
     syncWalineTheme();
   };
 
-  btn.addEventListener('click', () => {
-    const order = ['auto', 'light', 'dark'];
-    apply(order[(order.indexOf(currentTheme) + 1) % 3]);
-  });
+  btnLight.addEventListener('click', () => apply('light'));
+  btnDark.addEventListener('click',  () => apply('dark'));
+  btnAuto.addEventListener('click',  () => apply('auto'));
 
   apply(currentTheme);
 
@@ -217,9 +218,16 @@ function generateTOC(container) {
 
 // ==================== 搜索系统（Fuse.js） ====================
 async function initSearch() {
+  if (typeof Fuse === 'undefined') {
+    console.error('Fuse.js 未加载，搜索功能不可用');
+    return;
+  }
+
   try {
     const res = await fetch('/search.json');
+    if (!res.ok) throw new Error(`search.json ${res.status}`);
     const data = await res.json();
+
     fuse = new Fuse(data, {
       keys: [
         { name: 'title', weight: 0.4 },
@@ -235,9 +243,10 @@ async function initSearch() {
     const dropdown = $('search-dropdown');
     const list = $('search-results');
 
-    input.addEventListener('input', e => {
-      const q = e.target.value.trim();
-      if (!q) { dropdown.style.display = 'none'; return; }
+    const doSearch = () => {
+      const q = (input.value || '').trim();
+      if (!q) { list.innerHTML = ''; dropdown.style.display = 'none'; return; }
+      if (!fuse) return;
 
       const results = fuse.search(q).slice(0, 8);
       list.innerHTML = '';
@@ -250,7 +259,7 @@ async function initSearch() {
           item.className = 'search-result-item';
           item.innerHTML = `
             <div class="search-result-title">${escapeHtml(r.item.title)}</div>
-            <div class="search-result-desc">${escapeHtml(r.item.description || r.item.date)}</div>
+            <div class="search-result-desc">${escapeHtml(r.item.description || formatDate(r.item.date))}</div>
           `;
           item.addEventListener('click', () => {
             location.hash = `#/post/${r.item.slug}`;
@@ -261,6 +270,25 @@ async function initSearch() {
         });
       }
       dropdown.style.display = 'block';
+    };
+
+    const bindInput = () => {
+      try {
+        const nativeInput = input.shadowRoot && input.shadowRoot.querySelector('input');
+        if (nativeInput) { nativeInput.addEventListener('input', doSearch); return true; }
+      } catch (e) {}
+      return false;
+    };
+
+    if (!bindInput()) {
+      customElements.whenDefined('mdui-text-field').then(() => {
+        requestAnimationFrame(bindInput);
+      });
+    }
+
+    input.addEventListener('keyup', doSearch);
+    input.addEventListener('focus', () => {
+      if ((input.value || '').trim() && fuse) doSearch();
     });
 
     document.addEventListener('click', e => {
