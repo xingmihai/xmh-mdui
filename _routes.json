@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/*"],
+  "include": ["/"],
   "exclude": ["/assets/*", "/posts/*", "/posts-html/*", "/rss.xml", "/search.json", "/robots.txt", "/about.md", "/friends.json"]
 }
