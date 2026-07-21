@@ -2,7 +2,7 @@
 
 > 一套基于 MDUI v2 的纯静态个人博客主题。零框架依赖，零后端依赖，只需 Markdown 即可开始写作。
 
-[在线演示](https://xmh-mdui.edgeone.dev/) · [使用教程](https://www.xmhai.cn/#/post/xmh-mdui-tutorial)
+[在线演示](https://mdui.xmhai.cn) · [使用教程](https://www.xmhai.cn/#/post/xmh-mdui-tutorial)
 
 ![Stars](https://img.shields.io/github/stars/xingmihai/xmh-mdui?style=flat&logo=github)
 ![Forks](https://img.shields.io/github/forks/xingmihai/xmh-mdui?style=flat&logo=github)
