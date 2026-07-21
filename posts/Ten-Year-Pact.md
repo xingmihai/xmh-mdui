@@ -5,9 +5,8 @@ tags:
   - 十年之约
 id: 20260614
 date: 2026-06-14 00:00:00
-cover: "assets/images/footer/ten_year_promise.svg"
+cover: "assets/images/ten_year_promise.svg"
 recommend: true
-top: true
 ---
 
 ## 十年之约
@@ -19,7 +18,7 @@ top: true
 [履约证书](https://www.blogsclub.org/certificate/10000218)
 :::
 
-![ten_year_promise](/assets/images/footer/ten_year_promise.svg)
+![ten_year_promise](/assets/images/ten_year_promise.svg)
 
 ---
 
@@ -43,7 +42,7 @@ top: true
 #### 1. 直接嵌入 HTML
 
 ```html
-<object data="ten_year_promise.svg" type="image/svg+xml" width="300" height="300"></object>
+<object data="ten_year_promise.svg" type="image/svg+xml" width="250" height="250"></object>
 ```
 
 或

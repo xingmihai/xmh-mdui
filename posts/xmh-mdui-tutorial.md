@@ -7,7 +7,7 @@ cover: https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200
 ---
 
 # xmh-mdui 博客使用教程
->[!TIP]
+> <mdui-icon-privacy-tip></mdui-icon-privacy-tip>]
 >
 >虽然目前还有很多不足的地方，但是后续会慢慢优化
 
