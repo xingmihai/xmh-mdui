@@ -205,7 +205,7 @@ console.log("代码块也支持");
 ```javascript
 const CONFIG = {
   siteName: '星觅海的博客',
-  siteUrl: 'https://mdui.xmhai.cn',
+  siteUrl: 'https://www.xmhai.cn',
   walineServer: 'https://your-waline-server.com',  // 评论服务器
   postsDir: '/posts/',
 };

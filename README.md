@@ -110,7 +110,7 @@ cover: https://example.com/cover.jpg
 ```javascript
 const CONFIG = {
   siteName: '星觅海的博客',
-  siteUrl: 'https://mdui.xmhai.cn',
+  siteUrl: 'https://www.xmhai.cn',
   walineServer: 'https://your-waline-server.com',
   postsDir: '/posts/',
 };

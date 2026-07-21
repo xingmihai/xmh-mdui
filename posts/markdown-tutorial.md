@@ -155,13 +155,13 @@ cover: https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200
 #### 链接
 
 ```markdown
-[星觅海的博客](https://mdui.xmhai.cn)
+[星觅海的博客](https://www.xmhai.cn)
 [GitHub](https://github.com/xingmihai "我的 GitHub 主页")
 ```
 
 效果：
 
-[星觅海的博客](https://mdui.xmhai.cn)
+[星觅海的博客](https://www.xmhai.cn)
 [GitHub](https://github.com/xingmihai "我的 GitHub 主页")
 
 #### 图片
@@ -293,12 +293,12 @@ Markdown 是一种轻量级标记语言[^1]，由 John Gruber 创建[^2]。
 直接输入 URL 即可自动转换为链接：
 
 ```markdown
-https://mdui.xmhai.cn
+https://www.xmhai.cn
 ```
 
 效果：
 
-https://mdui.xmhai.cn
+https://www.xmhai.cn
 
 ---
 

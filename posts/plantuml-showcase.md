@@ -549,7 +549,7 @@ Project starts 2026-07-01
 {
     "blog": {
         "name": "星觅海的博客",
-        "url": "https://mdui.xmhai.cn",
+        "url": "https://www.xmhai.cn",
         "author": {
             "name": "星觅海",
             "email": "mail@xmhai.cn",
@@ -581,7 +581,7 @@ Project starts 2026-07-01
 @startyaml
 blog:
   name: 星觅海的博客
-  url: https://mdui.xmhai.cn
+  url: https://www.xmhai.cn
   description: 分享技术文章和生活随笔
   author:
     name: 星觅海

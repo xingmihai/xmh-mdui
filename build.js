@@ -11,7 +11,7 @@ const OUTPUT_RSS = path.join(__dirname, 'rss.xml');
 const OUTPUT_SEARCH = path.join(__dirname, 'search.json');
 
 const SITE_NAME = '星觅海的博客';
-const SITE_URL = 'https://mdui.xmhai.cn';
+const SITE_URL = 'https://www.xmhai.cn';
 const SITE_DESC = '星觅海的个人博客，分享技术文章和生活随笔';
 
 if (!fs.existsSync(OUTPUT_DIR)) {
