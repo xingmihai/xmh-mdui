@@ -6,7 +6,7 @@
 
 ![Stars](https://img.shields.io/github/stars/xingmihai/xmh-mdui?style=flat&logo=github)
 ![Forks](https://img.shields.io/github/forks/xingmihai/xmh-mdui?style=flat&logo=github)
-![License](https://img.shields.io/github/license/xingmihai/xmh-mdui?style=flat)
+![License](https://img.shields.io/github/license/xingmihai/xmh-mdui)
 
 ## 预览
 
