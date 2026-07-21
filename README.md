@@ -10,7 +10,7 @@
 
 ## 预览
 
-![浅色模式](https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800)
+![浅色模式](/assets/images/IMG_20260721_133824.jpg)
 
 ## 特性
 
