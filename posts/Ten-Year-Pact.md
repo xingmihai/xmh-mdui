@@ -11,14 +11,9 @@ recommend: true
 
 ## 十年之约
 
-### 效果可以看公告
+### 效果
 
-:::note{type="error"}
-2026.06.14 — 2036.06.14
-[履约证书](https://www.blogsclub.org/certificate/10000218)
-:::
-
-![ten_year_promise](/assets/images/ten_year_promise.svg)
+<object data="/assets/images/ten_year_promise.svg" type="image/svg+xml" width="250" height="250"></object>
 
 ---
 
