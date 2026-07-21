@@ -402,15 +402,6 @@ async function handleRoute() {
   const { handler, params } = parseRoute(location.hash);
   const container = $('page-container');
 
-  // 直接访问不存在的路径（非 hash 路由）时显示 404
-  if (location.pathname !== '/' && !location.hash) {
-    render404(container);
-    updateMeta('404', '页面不存在');
-    return;
-  }
-
-  const { handler, params } = parseRoute(location.hash);
-
   container.style.opacity = '0';
   container.style.transform = 'translateY(12px)';
   await new Promise(r => setTimeout(r, 150));
