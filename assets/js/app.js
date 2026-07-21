@@ -2,7 +2,7 @@
 const CONFIG = {
   siteName: '星觅海的博客',
   siteUrl: 'https://www.xmhai.cn',
-  walineServer: 'https://vercel-waline.xmhai.cn',
+  walineServer: '在这里替换你的链接',
   postsDir: '/posts/',
 };
 
