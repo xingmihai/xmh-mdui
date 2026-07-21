@@ -3,7 +3,7 @@ title: xmh-mdui 博客使用教程
 date: 2026-07-21
 tags: ["教程", "MDUI", "博客"]
 description: 详细介绍如何使用 xmh-mdui 搭建个人博客，包括写作、自定义语法、部署等完整流程。
-cover: https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200
+cover: /assets/images/IMG_20260721_133824.jpg
 ---
 
 # xmh-mdui 博客使用教程
