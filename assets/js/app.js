@@ -939,44 +939,35 @@ async function renderFriendDetail(container, params) {
 async function loadFriendRSS(f) {
   const rssContainer = $('friend-rss');
   if (!rssContainer) return;
-
-  // 使用多个 RSS 代理作为 fallback
-  const rssUrls = [
-    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.rss)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(f.rss)}`,
-  ];
-
-  let rssData = null;
-  for (const url of rssUrls) {
-    try {
-      const rssRes = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!rssRes.ok) continue;
-      const data = await rssRes.json();
-      if (data.status === 'ok' || data.items) {
-        rssData = data;
-        break;
-      }
-    } catch (e) { /* continue */ }
-  }
-
-  if (!rssContainer) return;
-
-  if (!rssData || !rssData.items) {
+  
+  try {
+    const rssRes = await fetch(`/api/rss?url=${encodeURIComponent(f.rss)}`, {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!rssRes.ok) throw new Error(`HTTP ${rssRes.status}`);
+    const rssData = await rssRes.json();
+    
+    if (!rssContainer) return;
+    
+    if (rssData.status !== 'ok' || !rssData.items) {
+      throw new Error(rssData.message || 'Invalid RSS');
+    }
+    
+    let list = '<mdui-list>';
+    rssData.items.slice(0, 10).forEach(item => {
+      const title = escapeHtml(item.title || '无标题').replace(/"/g, '&quot;');
+      const date = formatDate(item.pubDate).replace(/"/g, '&quot;');
+      list += '<mdui-list-item rounded href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener" headline="' + title + '" description="' + date + '"></mdui-list-item>';
+    });
+    list += '</mdui-list>';
+    rssContainer.innerHTML = list;
+  } catch (err) {
+    if (!rssContainer) return;
     rssContainer.innerHTML = `<mdui-card style="padding:16px;text-align:center;">
       <mdui-icon name="rss_feed" style="font-size:32px;opacity:0.4;"></mdui-icon>
       <div class="mdui-typescale-body-medium" style="margin-top:8px;">RSS 加载失败，请直接访问博客</div>
     </mdui-card>`;
-    return;
   }
-
-  let list = '<mdui-list>';
-  rssData.items.slice(0, 10).forEach(item => {
-    const title = escapeHtml(item.title || '无标题').replace(/"/g, '&quot;');
-    const date = formatDate(item.pubDate).replace(/"/g, '&quot;');
-    list += '<mdui-list-item rounded href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener" headline="' + title + '" description="' + date + '"></mdui-list-item>';
-  });
-  list += '</mdui-list>';
-  rssContainer.innerHTML = list;
 }
 
 function render404(container) {
